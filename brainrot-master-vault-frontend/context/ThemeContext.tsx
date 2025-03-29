@@ -13,10 +13,10 @@ type ThemeContextType = {
   };
 };
 
-const lightTheme: ThemeContextType = {
+const darkTheme: ThemeContextType = {
   colors: {
     primary: "#0878fe", // Spotify green
-    background: "#181818",
+    background: "#111111",
     card: "#383f44",
     text: "#FFFFFF",
     border: "#2b2d2f",
@@ -24,12 +24,12 @@ const lightTheme: ThemeContextType = {
   },
 };
 
-const ThemeContext = createContext<ThemeContextType>(lightTheme);
+const ThemeContext = createContext<ThemeContextType>(darkTheme);
 
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   return (
-    <ThemeContext.Provider value={lightTheme}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={darkTheme}>{children}</ThemeContext.Provider>
   );
 };
