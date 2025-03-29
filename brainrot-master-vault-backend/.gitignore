@@ -2,3 +2,4 @@
 .env
 __pycache__/
 extracted_audio/
+youtube_tools/youtube_cache.db

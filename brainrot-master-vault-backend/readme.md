@@ -14,6 +14,7 @@ This folder contains the backend code for the Brainrot Master Vault project. The
   - `download_audio(url, video_id)`: Downloads audio from a YouTube URL using yt-dlp.
 - `.env`: This file contains environment variables, such as the Google API key.
 - `requirements.txt`: This file lists the Python packages required to run the backend.
+- `youtube_tools/CACHE_DB.md`: Documentation for the Cache DB.
 
 ## Example
 

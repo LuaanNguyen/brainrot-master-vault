@@ -1,6 +1,8 @@
 import os
+import json # Added for parsing cached JSON
 from dotenv import load_dotenv
 import yt_dlp
+from .db_commands import get_cached_response, cache_response # Import cache functions
 
 load_dotenv()
 
@@ -23,16 +25,42 @@ def get_youtube_video_id(url):
 
 def get_youtube_video_details(video_id: str):
     """
-    Fetches video details using the YouTube Data API.
+    Fetches video details using the YouTube Data API, checking the cache first.
     """
-    import requests
+    # 1. Check cache first
+    cached_data_json = get_cached_response(video_id)
+    if cached_data_json:
+        print(f"Cache hit for video ID: {video_id}")
+        try:
+            # Parse the JSON string from the cache
+            return json.loads(cached_data_json)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding cached JSON for {video_id}: {e}")
+            # Proceed to fetch from API if cache is corrupted
+
+    # 2. If not in cache or cache error, fetch from API
+    print(f"Cache miss for video ID: {video_id}. Fetching from API.")
+    import requests # Keep import local to function if only used here
 
     url = f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={google_api_key}&part=snippet,contentDetails"
-    response = requests.get(url)
     
-    if response.status_code == 200:
-        return response.json()
-    else:
+    try:
+        response = requests.get(url)
+        response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
+        
+        video_data = response.json()
+        
+        # 3. Cache the new response
+        cache_response(video_id, video_data)
+        print(f"Cached API response for video ID: {video_id}")
+        
+        return video_data
+
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed for {video_id}: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Error decoding API response JSON for {video_id}: {e}")
         return None
     
 def parse_video_details(video_details: dict):
