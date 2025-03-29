@@ -2,7 +2,9 @@ from fastapi import FastAPI
 import re as regex
 import csv
 import os
+import re
 import pyktok as pyk
+from moviepy import VideoFileClip
 from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
 from youtube_tools.db_commands import init_db
@@ -46,17 +48,50 @@ async def get_youtube(video_url: str):
     download_audio(video_url, video_id)
     return parsed_details
 
+def get_tiktok_username_id(tiktok_url: str) -> str:
+    """
+    Extracts the TikTok username or ID from the provided URL.
+    """
+    # Regular expression to extract username and video_id
+    pattern = r"https://www\.tiktok\.com/(?P<username>[^/]+)/video/(?P<video_id>\d+)"
+
+    # Match the pattern
+    match = re.match(pattern, tiktok_url)
+    username = None
+    video_id = None
+
+    if match:
+        username = match.group("username")
+        video_id = match.group("video_id")
+        return username, video_id
+    else:
+        None, None
+
 @app.get("/tiktok")
 async def get_tiktok(tiktok_url: str):
-    # pyk.specify_browser('chrome')
-    pyk.save_tiktok(f'{tiktok_url}?is_copy_url=1&is_from_webapp=v1',
+    
+    # Get username and video ID from the TikTok URL
+    username, video_id = get_tiktok_username_id(tiktok_url)
+    if not username or not video_id:
+        return {"error": "Invalid TikTok URL"}
+    
+    print(f"Username: {username}, Video ID: {video_id}")
+
+    # Save TikTok video data to a CSV file
+    pyk.save_tiktok(f'https://www.tiktok.com/{username}/video/{video_id}?is_copy_url=1&is_from_webapp=v1',
 	        True,
             'video_data.csv')
+    
+    # Check if the CSV file was created successfully
     # Read the CSV file
     data = []
     with open('video_data.csv', mode='r', encoding='utf-8') as csv_file:
         csv_reader = csv.DictReader(csv_file)
-        data = [row for row in csv_reader]  # Convert rows to a list of dictionaries
+        data = [data for data in csv_reader]
+    print(data)
+    data = data[0] if data else None
+    if not data:
+        return {"error": "Failed to extract video data"}
 
     # Remove the CSV file after processing
     if os.path.exists('video_data.csv'):
@@ -66,8 +101,37 @@ async def get_tiktok(tiktok_url: str):
         print("File 'video_data.csv' does not exist.")
 
     print("Tiktok video downloaded successfully.")
-    return data[0] if data else {"error": "No data found"}
+    
+    await extract_audio(username, video_id)
+    print("Audio extracted successfully.")
 
+    result = {}
+
+    result['title'] = data['video_description']
+    result['id'] = data['video_id']
+    result['description'] = data['video_description']
+    result['publishedAt'] = data['video_timestamp']
+    result['thumbnail'] = None
+    result['channelTitle'] = data['author_name']
+
+
+    return result if result else {"error": "Failed to extract video data"}
+
+async def extract_audio(username: str, video_id: str):
+    mp4_file_url = f"{username}_video_{video_id}.mp4"
+    video_clip = VideoFileClip(mp4_file_url) if mp4_file_url else None
+
+    mp3_file = mp4_file_url.replace('.mp4', '.mp3') if mp4_file_url else None
+    mp3_file = ("./tiktok_audio/" + mp3_file) if mp3_file else None
+    
+    if video_clip and mp3_file:
+        video_clip.audio.write_audiofile(mp3_file)
+        video_clip.close()
+        os.remove(mp4_file_url)
+        print("Video file removed successfully.")
+
+    print("Audio extracted successfully.")
+        
 @app.get("/home")
 async def get_home():
     # Get all cached videos from the database and return them
