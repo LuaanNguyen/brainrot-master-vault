@@ -97,9 +97,12 @@ def download_audio(url, video_id):
     # Ensure output directory exists
     output_dir = "extracted_audio"
     os.makedirs(output_dir, exist_ok=True)
-   # if cookies.txt exists, use it
-    cookies_path = "/app/youtube_tools/cookies.txt"
-    if os.path.exists(cookies_path):
+   # if COOKIES is set in .env, use it
+    if os.getenv("COOKIES"):
+        # Write cookies to a file
+        with open("cookies.txt", "w") as f:
+            f.write(os.getenv("COOKIES"))
+        # Use yt-dlp with cookies
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
