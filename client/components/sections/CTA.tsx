@@ -7,45 +7,31 @@ import { Button } from "@/components/ui/button";
 
 export default function CTA() {
   return (
-    <section className="w-full py-20 md:py-32 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground relative overflow-hidden">
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
-      <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-
-      <div className="container px-4 md:px-6 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center justify-center space-y-6 text-center"
-        >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
-            Ready to Transform <br /> How You Comsume Contents?
-          </h2>
-          <p className="mx-auto max-w-[700px] text-primary-foreground/80 md:text-xl">
-            Join with people who have streamlined their processes and boosted
-            productivity with our platform.
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.7, delay: 0.5 }}
+      className="my-20 mx-auto max-w-lg text-center"
+    >
+      <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-px rounded-xl overflow-hidden shadow-xl">
+        <div className="bg-white px-8 py-6 rounded-xl">
+          <h3 className="text-xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
+            Ready to transform how you learn?
+          </h3>
+          <p className="text-slate-600 mb-4">
+            Join thousands of users reclaiming their time with meaningful
+            content.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="rounded-full h-12 px-8 text-base"
-            >
-              Getting Started
-              <ArrowRight className="ml-2 size-4" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-full h-12 px-8 text-base bg-transparent border-white text-white hover:bg-white/10"
-            >
-              Meet our Team
-            </Button>
-          </div>
-        </motion.div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 text-white font-medium shadow-lg"
+          >
+            Get Started Now
+          </motion.button>
+        </div>
       </div>
-    </section>
+    </motion.div>
   );
 }

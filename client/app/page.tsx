@@ -40,6 +40,7 @@ import Pricing from "@/components/sections/Pricing";
 import FAQ from "@/components/sections/FAQ";
 import CTA from "@/components/sections/CTA";
 import Footer from "@/components/Footer";
+import Problem from "@/components/sections/Problem";
 
 export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -49,6 +50,9 @@ export default function LandingPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Force light theme on mount
+    setTheme("light");
+
     const handleScroll = () => {
       if (window.scrollY > 10) {
         setIsScrolled(true);
@@ -59,10 +63,11 @@ export default function LandingPage() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [setTheme]);
 
+  // Modify toggle function to always go back to light theme
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    setTheme("light");
   };
 
   const container = {
@@ -129,6 +134,7 @@ export default function LandingPage() {
       />
       <main className="flex-1">
         <Hero />
+        <Problem />
         <Features />
         {/* <HowItWorks />
         <Testimonials /> 
