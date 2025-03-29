@@ -23,6 +23,17 @@ def init_db():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # Add transcript column if it doesn't exist
+        try:
+            cursor.execute("ALTER TABLE cache ADD COLUMN transcript TEXT")
+            print("Added 'transcript' column to cache table.")
+        except sqlite3.OperationalError as e:
+            # Ignore error if column already exists
+            if "duplicate column name" not in str(e):
+                raise e
+            # else:
+            #     print("'transcript' column already exists.") # Optional: uncomment for verbose logging
+
         conn.commit()
         print(f"Database initialized successfully at {DB_PATH}")
     except sqlite3.Error as e:
@@ -71,18 +82,79 @@ def cache_response(video_id: str, response_data: dict):
         if conn:
             conn.close()
 
-def get_all(user: str = None):
-    """Fetches all cached videos from the database."""
+
+def cache_transcript(video_id: str, transcript: str):
+    """Stores or updates the transcript for a given video_id."""
+    conn = None
+    print(f"Caching transcript for video ID: {video_id}")
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # First check if video_id exists
+        cursor.execute("SELECT 1 FROM cache WHERE video_id = ?", (video_id,))
+        exists = cursor.fetchone() is not None
+        
+        if exists:
+            # Update transcript if row exists
+            cursor.execute('''
+                UPDATE cache SET transcript = ? WHERE video_id = ?
+            ''', (transcript, video_id))
+        else:
+            # Insert new row with empty JSON for response_data if row doesn't exist
+            cursor.execute('''
+                INSERT INTO cache (video_id, response_data, transcript)
+                VALUES (?, ?, ?)
+            ''', (video_id, json.dumps({}), transcript))
+        
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Database error caching transcript for {video_id}: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+def get_cached_transcript(video_id: str):
+    """Fetches the cached transcript for a given video_id."""
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("SELECT video_id, response_data FROM cache")
+        cursor.execute("SELECT transcript FROM cache WHERE video_id = ?", (video_id,))
+        result = cursor.fetchone()
+        # Return the transcript if it exists and is not None, otherwise return None
+        return result[0] if result and result[0] is not None else None
+    except sqlite3.Error as e:
+        print(f"Database error fetching transcript for {video_id}: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_all(user: str = None):
+    """Fetches all cached videos (including transcripts) from the database."""
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        # Fetch video_id, response_data, and transcript
+        cursor.execute("SELECT video_id, response_data, transcript FROM cache")
         results = cursor.fetchall()
         # Convert results to a list of dictionaries
-        return [{"video_id": row[0], "response_data": json.loads(row[1])} for row in results]
+        # Handle cases where response_data might be None if only transcript was cached initially
+        all_data = []
+        for row in results:
+            video_id, response_data_json, transcript = row
+            response_data = json.loads(response_data_json) if response_data_json else None
+            all_data.append({
+                "video_id": video_id,
+                "response_data": response_data,
+                "transcript": transcript
+            })
+        return all_data
     except sqlite3.Error as e:
-        print(f"Database error fetching all cached videos: {e}")
+        print(f"Database error fetching all cached data: {e}")
         return []
     finally:
         if conn:

@@ -5,11 +5,10 @@ import os
 import re
 import pyktok as pyk
 import requests
-from moviepy import VideoFileClip
+from moviepy import VideoFileClip # Corrected import
 from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
-from youtube_tools.db_commands import init_db
-from youtube_tools.db_commands import get_all
+from youtube_tools.db_commands import init_db, get_all, get_cached_transcript, cache_transcript # Import transcript functions
 
 # Lifespan context manager to run init_db on startup
 @asynccontextmanager
@@ -56,12 +55,23 @@ async def get_youtube(video_url: str):
         audio_dir = "youtube_audio"
     mp3_file_path = os.path.join(audio_dir, f"{video_id}.mp3")
 
-    # Check if audio file exists before transcribing
-    if os.path.exists(mp3_file_path):
-        print(f"Transcribing audio file: {mp3_file_path}")
+    # Check cache for transcript first
+    cached_transcript = get_cached_transcript(video_id)
+    if cached_transcript:
+        print(f"Cache hit for transcript: {video_id}")
+        parsed_details['transcription'] = cached_transcript
+    # If not cached, check if audio file exists, transcribe, and cache
+    elif os.path.exists(mp3_file_path):
+        print(f"Cache miss for transcript: {video_id}. Transcribing audio file: {mp3_file_path}")
         transcribed_text = await transcribe(mp3_file_path)
-        parsed_details['transcription'] = transcribed_text
-        print("Transcription added to YouTube details.")
+        print("Transcription completed.")
+        if transcribed_text: # Only cache if transcription was successful
+            cache_transcript(video_id, transcribed_text)
+            print(f"Cached transcript for video ID: {video_id}")
+            parsed_details['transcription'] = transcribed_text
+        else:
+            print(f"Transcription failed for {video_id}, not caching.")
+            parsed_details['transcription'] = None
     else:
         print(f"Audio file not found at {mp3_file_path}, skipping transcription.")
         parsed_details['transcription'] = None # Or handle as appropriate
@@ -184,7 +194,7 @@ async def transcribe(mp3_file: str):
     with open(mp3_file, "rb") as file:
         response = requests.post(transcribe_api_url, files={"file": file})
     
-    transcribed_text = print(response.json())
+    transcribed_text = response.json()
     return transcribed_text
         
 @app.get("/metadata")
@@ -205,21 +215,37 @@ async def get_metadata(url: str):
 async def get_home():
     # Get all cached videos from the database and return them
     all_videos = get_all()
-    # Run all the videos through the parse_video_details function
-    # and return the parsed details
+    # Process all videos, including fetching/adding transcripts
     if all_videos:
-        videos = []
-        for video in all_videos:
-            video_id = video['video_id']
-            video_details = get_youtube_video_details(video_id)
-            if not video_details:
-                return {"error": "Video not found"}
-            parsed_details = parse_video_details(video_details)
+        videos_with_details = []
+        for video_data in all_videos:
+            video_id = video_data.get('video_id')
+            if not video_id:
+                continue # Skip if no video_id
+
+            # Use cached response_data if available, otherwise fetch
+            response_data = video_data.get('response_data')
+            if not response_data:
+                # Fetch details if not fully cached (e.g., only transcript was cached before)
+                fetched_details = get_youtube_video_details(video_id)
+                if not fetched_details:
+                    print(f"Could not fetch details for {video_id} in /home")
+                    continue # Skip if details can't be fetched
+                response_data = fetched_details # Use fetched data
+
+            # Parse details
+            parsed_details = parse_video_details(response_data)
             if not parsed_details:
-                return {"error": "Failed to parse video details"}
-            # Download audio from the video
-            download_audio(video['video_id'], video_id)
-            videos.append(parsed_details)
-        return {"videos": videos}
+                print(f"Could not parse details for {video_id} in /home")
+                continue # Skip if parsing fails
+
+            # Add cached transcript if available
+            parsed_details['transcription'] = video_data.get('transcript')
+
+            # Note: We might not need to download audio again here unless specifically required
+            # download_audio(video_id, video_id) # Reconsider if this download is necessary for /home
+
+            videos_with_details.append(parsed_details)
+        return {"videos": videos_with_details}
     else:
-        return {"error": "No cached videos found"}
+        return {"videos": []} # Return empty list instead of error
