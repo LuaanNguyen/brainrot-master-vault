@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Hero() {
   const [activeFeature, setActiveFeature] = useState(0);
@@ -193,7 +194,7 @@ export default function Hero() {
                 size="lg"
                 className="rounded-full h-14 px-8 text-base bg-gradient-to-r from-blue-600 to-violet-600 text-white border-0 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
               >
-                Try Now
+                <Link href="/graph-view"> Try Now</Link>
                 <ChevronRight className="ml-1 size-4" />
               </Button>
             </motion.div>
@@ -204,7 +205,8 @@ export default function Hero() {
                 variant="outline"
                 className="rounded-full h-14 px-8 text-base border-blue-200 text-blue-700 hover:bg-blue-50"
               >
-                See How It Works
+                <Link href="/graph-view"> See How It Works</Link>
+
                 <ArrowUpRight className="ml-1 size-4" />
               </Button>
             </motion.div>
