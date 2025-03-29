@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 import re as regex
+import csv
+import os
+import pyktok as pyk
 from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
 from youtube_tools.db_commands import init_db # Import init_db
@@ -41,3 +44,25 @@ async def get_youtube(video_url: str):
     # Download audio from the video
     download_audio(video_url, video_id)
     return parsed_details
+
+@app.get("/tiktok")
+async def get_tiktok(tiktok_url: str):
+    # pyk.specify_browser('chrome')
+    pyk.save_tiktok(f'{tiktok_url}?is_copy_url=1&is_from_webapp=v1',
+	        True,
+            'video_data.csv')
+    # Read the CSV file
+    data = []
+    with open('video_data.csv', mode='r', encoding='utf-8') as csv_file:
+        csv_reader = csv.DictReader(csv_file)
+        data = [row for row in csv_reader]  # Convert rows to a list of dictionaries
+
+    # Remove the CSV file after processing
+    if os.path.exists('video_data.csv'):
+        os.remove('video_data.csv')
+        print("Temporary file 'video_data.csv' removed successfully.")
+    else:
+        print("File 'video_data.csv' does not exist.")
+
+    print("Tiktok video downloaded successfully.")
+    return data[0] if data else {"error": "No data found"}
