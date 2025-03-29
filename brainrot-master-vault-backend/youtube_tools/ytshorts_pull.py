@@ -98,7 +98,7 @@ def download_audio(url, video_id):
     output_dir = "extracted_audio"
     os.makedirs(output_dir, exist_ok=True)
    # if cookies.txt exists, use it
-    cookies_path = os.path.join(os.path.dirname(__file__), "cookies.txt")
+    cookies_path = "/app/youtube_tools/cookies.txt"
     if os.path.exists(cookies_path):
         ydl_opts = {
             'format': 'bestaudio/best',
