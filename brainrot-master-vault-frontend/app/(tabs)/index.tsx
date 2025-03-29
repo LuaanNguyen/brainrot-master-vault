@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   StatusBar,
   FlatList,
+  Linking,
 } from "react-native";
 import { router } from "expo-router";
 
@@ -80,16 +81,31 @@ const DailyMixCard = ({ item }) => {
 
 // Recently Added Item Component
 const RecentlyAddedItem = ({ item }) => {
+  // Format the published date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
   return (
-    <TouchableOpacity style={styles.recentlyAddedItem}>
+    <TouchableOpacity
+      style={styles.recentlyAddedItem}
+      onPress={() => Linking.openURL(`https://youtube.com/shorts/${item.id}`)}
+    >
       <View style={styles.videoThumbnailContainer}>
         <Image
-          source={{ uri: item.imageUrl }}
+          source={{ uri: item.thumbnails }}
           style={styles.recentlyAddedCover}
         />
         <View style={styles.durationBadge}>
           <Text style={styles.durationText}>
-            {item.subtitle.split("•")[1].trim()}
+            {formatDate(item.publishedAt)}
           </Text>
         </View>
       </View>
@@ -97,9 +113,7 @@ const RecentlyAddedItem = ({ item }) => {
         <Text style={styles.recentlyAddedTitle} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.recentlyAddedSubtitle}>
-          {item.subtitle.split("•")[0].trim()}
-        </Text>
+        <Text style={styles.recentlyAddedSubtitle}>{item.channelTitle}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -108,9 +122,18 @@ const RecentlyAddedItem = ({ item }) => {
 // Main App
 const Home = () => {
   const [activeTab, setActiveTab] = useState("All");
+  const [recentlyAddItems, setRecentItems] = useState([]);
+
+  useEffect(() => {
+    fetch("https://brainrotapi.codestacx.com/home")
+      .then((response) => response.json())
+      .then((data) => {
+        setRecentItems(data.videos);
+      });
+  }, []);
 
   // Mock data
-  const recentItems = [
+  const categories = [
     {
       id: "1",
       title: "Tech & AI Trends",
@@ -178,50 +201,6 @@ const Home = () => {
     },
   ];
 
-  // Recently Added mock data
-  const recentlyAddedItems = [
-    {
-      id: "1",
-      title: "AI Can Now Code Itself?",
-      subtitle: "Tech & AI • 2 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/123456789",
-    },
-    {
-      id: "2",
-      title: "How to Save Money in Your 20s",
-      subtitle: "Finance & Investing • 1 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1565373677921-0a9f1a025952?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/987654321",
-    },
-    {
-      id: "3",
-      title: "5-Minute Workout for Busy People",
-      subtitle: "Health & Fitness • 3 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1576678927484-cc9079570884?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/1122334455",
-    },
-    {
-      id: "4",
-      title: "Why Are Ice Baths So Popular?",
-      subtitle: "Science & Health • 2 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1612837017391-f77707cf7688?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/5566778899",
-    },
-    {
-      id: "5",
-      title: "The Secret to Going Viral",
-      subtitle: "Content Creation • 4 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1605379399642-870262d3d051?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/3344556677",
-    },
-  ];
-
   // Render
   return (
     <SafeAreaView style={styles.container}>
@@ -233,7 +212,7 @@ const Home = () => {
         <Text style={styles.title}> Playlists</Text>
         {/* Recent items - grid layout */}
         <View style={styles.recentGrid}>
-          {recentItems.map((item) => (
+          {categories.map((item) => (
             <MusicItem key={item.id} item={item} />
           ))}
         </View>
@@ -266,9 +245,15 @@ const Home = () => {
 
         {/* Recently Added items - vertical list */}
         <View style={styles.recentlyAddedList}>
-          {recentlyAddedItems.map((item) => (
-            <RecentlyAddedItem key={item.id} item={item} />
-          ))}
+          {recentlyAddItems && recentlyAddItems.length > 0 ? (
+            recentlyAddItems.map((item) => (
+              <RecentlyAddedItem key={item.id} item={item} />
+            ))
+          ) : (
+            <Text style={styles.recentlyAddedSubtitle}>
+              No recent items available
+            </Text>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
