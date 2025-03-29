@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import re as regex
-from ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
+from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
 
 app = FastAPI()
 
