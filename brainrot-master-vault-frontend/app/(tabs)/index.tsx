@@ -62,7 +62,7 @@ const DailyMixCard = ({ item }) => {
         <Text style={styles.dailyMixNumber}>{item.number}</Text>
       </View>
       <Text style={styles.dailyMixArtists} numberOfLines={2}>
-        {item.artists}
+        {item.description}
       </Text>
     </TouchableOpacity>
   );
@@ -150,21 +150,21 @@ const Home = () => {
       number: "01",
       imageUrl:
         "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800&auto=format&fit=crop",
-      artists: "OCTOBER, Nuage Cafe, Tales of Vibrations and more",
+      description: "Tech Innovations, AI Trends, and Future Gadgets",
     },
     {
       id: "2",
       number: "02",
       imageUrl:
         "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop",
-      artists: "Simon Wester, Rasmus H Thomsen, We Dream of and more",
+      description: "Study Hacks, Learning Tips, and Productivity Boosters",
     },
     {
       id: "3",
       number: "03",
       imageUrl:
         "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800&auto=format&fit=crop",
-      artists: "Milky Day, Jimmy Brown, Hojean and more",
+      description: "Gaming Strategies, Esports Highlights, and Pro Tips",
     },
   ];
 
