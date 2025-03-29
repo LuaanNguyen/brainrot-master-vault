@@ -99,6 +99,7 @@ def download_audio(url, video_id):
     output_dir = "extracted_audio"
     os.makedirs(output_dir, exist_ok=True)
    # if COOKIES is set in .env, use it
+    print(f"Using cookies: {cookies}")
     if cookies:
         # Use yt-dlp with cookies directly from env var
         ydl_opts = {
