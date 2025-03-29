@@ -72,8 +72,23 @@ async def get_tiktok(tiktok_url: str):
 async def get_home():
     # Get all cached videos from the database and return them
     all_videos = get_all()
+    # Run all the videos through the parse_video_details function
+    # and return the parsed details
     if all_videos:
-        return all_videos
+        videos = []
+        for video in all_videos:
+            video_id = video['video_id']
+            video_details = get_youtube_video_details(video_id)
+            if not video_details:
+                return {"error": "Video not found"}
+            parsed_details = parse_video_details(video_details)
+            if not parsed_details:
+                return {"error": "Failed to parse video details"}
+            # Download audio from the video
+            download_audio(video['video_id'], video_id)
+            videos.append(parsed_details)
+        return {"videos": videos}
     else:
         return {"error": "No cached videos found"}
+    
      
