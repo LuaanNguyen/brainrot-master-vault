@@ -3,20 +3,11 @@
  */
 declare module 'd3-force';
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { View, Text, StyleSheet, Dimensions, Pressable, GestureResponderEvent } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { View, Text, StyleSheet, Dimensions, Pressable, FlatList, Animated } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Line, G, Text as SvgText } from "react-native-svg";
-import { PanGestureHandler, PinchGestureHandler, State } from "react-native-gesture-handler";
 import * as d3 from "d3-force";
-import Animated, {
-  useAnimatedGestureHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  runOnJS,
-  useAnimatedReaction,
-} from "react-native-reanimated";
 
 // Define custom node type
 interface NodeType {
@@ -79,6 +70,15 @@ const initialLinks: LinkType[] = [
   { source: 5, target: 9 }, // Books to Ideas
 ];
 
+// Sample video data
+const SAMPLE_VIDEOS = [
+  { id: '1', title: 'Introduction to React Native', duration: '10:23' },
+  { id: '2', title: 'Building Custom Hooks', duration: '15:45' },
+  { id: '3', title: 'State Management Best Practices', duration: '8:12' },
+  { id: '4', title: 'Performance Optimization Tips', duration: '12:38' },
+  { id: '5', title: 'Navigation in React Native', duration: '9:51' },
+];
+
 const { width, height } = Dimensions.get("window");
 
 // This is our knowledge graph visualization component
@@ -86,94 +86,37 @@ export default function ExploreScreen() {
   const [nodes, setNodes] = useState<NodeType[]>(initialNodes);
   const [links, setLinks] = useState<LinkType[]>(initialLinks);
   const [selectedNode, setSelectedNode] = useState<NodeType | null>(null);
-  const [draggingNode, setDraggingNode] = useState<number | null>(null);
+  const [showVideoSheet, setShowVideoSheet] = useState(false);
   
-  // For gestures and animations
-  const scale = useSharedValue(1);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
+  // Animation for bottom sheet
+  const bottomSheetAnim = useRef(new Animated.Value(0)).current;
   
-  // Simulation reference to stop/start force
+  // Simulation reference
   const simulationRef = useRef<d3.Simulation<NodeType, LinkType> | null>(null);
   
-  // Function to update node position during dragging
-  // This sets a fixed position (fx, fy) on the node that the simulation respects
-  const updateNodePosition = (nodeId: number, x: number, y: number) => {
-    setNodes(prevNodes => 
-      prevNodes.map(node => 
-        node.id === nodeId 
-          ? { ...node, x, y, fx: x, fy: y } // Set fixed position so the simulation doesn't move it
-          : node
-      )
-    );
-  };
-  
-  // Function to release node when drag is finished
-  // This removes the fixed position constraints so the simulation can take over again
-  const releaseNode = () => {
-    if (draggingNode === null) return;
-    
-    setNodes(prevNodes => 
-      prevNodes.map(node => 
-        node.id === draggingNode 
-          ? { ...node, fx: null, fy: null } // Release fixed position
-          : node
-      )
-    );
-    
-    // Restart simulation briefly for a nice animation effect
-    const simulation = simulationRef.current;
-    if (simulation) {
-      simulation.alpha(0.1).restart();
-      setTimeout(() => simulation.alpha(0).stop(), 500);
-    }
-    
-    setDraggingNode(null);
-  };
-  
-  // Handle node press/tap
+  // Handle node tap
   const handleNodePress = (node: NodeType) => {
-    // Only select node if we weren't dragging
-    if (draggingNode === null) {
-      setSelectedNode(selectedNode?.id === node.id ? null : node);
-      
-      // Restart simulation briefly for animation
-      const simulation = simulationRef.current;
-      if (simulation) {
-        simulation.alpha(0.1).restart();
-        setTimeout(() => simulation.stop(), 500);
-      }
+    setSelectedNode(selectedNode?.id === node.id ? null : node);
+    if (selectedNode?.id !== node.id) {
+      setShowVideoSheet(true);
+      // Animate bottom sheet to slide up
+      Animated.timing(bottomSheetAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     }
   };
   
-  // Start dragging a node
-  const handleStartDrag = (nodeId: number) => {
-    setDraggingNode(nodeId);
-    
-    // Pause simulation while dragging
-    const simulation = simulationRef.current;
-    if (simulation) {
-      simulation.stop();
-    }
-  };
-  
-  // Create a new drag handler for each node to avoid context issues
-  const createNodeDragHandler = (nodeId: number, nodeX: number, nodeY: number) => {
-    return useAnimatedGestureHandler({
-      onStart: () => {
-        runOnJS(handleStartDrag)(nodeId);
-      },
-      onActive: (event) => {
-        // Calculate the new position
-        const newX = nodeX + event.translationX / scale.value;
-        const newY = nodeY + event.translationY / scale.value;
-        
-        // Update node position
-        runOnJS(updateNodePosition)(nodeId, newX, newY);
-      },
-      onEnd: () => {
-        runOnJS(releaseNode)();
-      },
+  // Close the video sheet
+  const closeVideoSheet = () => {
+    // Animate bottom sheet to slide down
+    Animated.timing(bottomSheetAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowVideoSheet(false);
     });
   };
   
@@ -198,11 +141,9 @@ export default function ExploreScreen() {
       linkForce.links(links);
     }
     
-    // Update node positions on each tick (only if not dragging)
+    // Update node positions on each tick
     simulation.on("tick", () => {
-      if (draggingNode === null) {
-        setNodes([...simulation.nodes()]);
-      }
+      setNodes([...simulation.nodes()]);
     });
     
     // Run simulation for some time then stop for performance
@@ -216,181 +157,159 @@ export default function ExploreScreen() {
       clearTimeout(timer);
       simulation.stop();
     };
-  }, [draggingNode]);
+  }, []);
   
-  // Pinch gesture handler for zoom
-  const pinchHandler = useAnimatedGestureHandler({
-    onActive: (event: any) => {
-      scale.value = event.scale;
-    },
-    onEnd: () => {
-      if (scale.value < 0.5) {
-        scale.value = withSpring(0.5);
-      } else if (scale.value > 3) {
-        scale.value = withSpring(3);
-      }
-    },
+  // Calculate bottom sheet transform based on animation value
+  const translateY = bottomSheetAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [height, height / 2],
   });
   
-  // Pan gesture handler for moving around
-  const panHandler = useAnimatedGestureHandler({
-    onStart: (_, ctx: any) => {
-      ctx.startX = translateX.value;
-      ctx.startY = translateY.value;
-    },
-    onActive: (event: any, ctx: any) => {
-      translateX.value = ctx.startX + event.translationX;
-      translateY.value = ctx.startY + event.translationY;
-    },
-  });
-  
-  // Animated style for graph container
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { scale: scale.value },
-      ],
-    };
-  });
-  
-  // Add useCallback to memoize the node render function
-  const renderNode = useCallback((node: NodeType) => {
-    if (node.x === undefined || node.y === undefined) return null;
-    
-    const isSelected = selectedNode?.id === node.id;
-    const isDragging = draggingNode === node.id;
-    
-    // Check if the node is connected to the selected node
-    const isConnected = selectedNode && links.some(link => {
-      const sourceId = typeof link.source === 'number' ? link.source : link.source.id;
-      const targetId = typeof link.target === 'number' ? link.target : link.target.id;
-      
-      return (
-        (sourceId === selectedNode.id && targetId === node.id) ||
-        (targetId === selectedNode.id && sourceId === node.id)
-      );
-    });
-    
-    // Create a unique drag handler for this node with its current position
-    const nodeHandler = createNodeDragHandler(node.id, node.x, node.y);
-    
-    return (
-      <React.Fragment key={`node-${node.id}`}>
-        {/* Glow effect for selected/connected/dragging nodes */}
-        {(isSelected || isConnected || isDragging) && (
-          <Circle
-            cx={node.x}
-            cy={node.y}
-            r={node.radius + (isDragging ? 10 : 6)}
-            fill={node.color}
-            opacity={isDragging ? 0.4 : 0.3}
-          />
-        )}
-        
-        {/* Node circle with drag gesture handler */}
-        <PanGestureHandler
-          onGestureEvent={nodeHandler}
-          shouldCancelWhenOutside={false}
-        >
-          <Animated.View>
-            <Circle
-              cx={node.x}
-              cy={node.y}
-              r={node.radius}
-              fill={node.color}
-              opacity={isSelected || !selectedNode || isConnected || isDragging ? 1 : 0.4}
-              onPress={() => runOnJS(handleNodePress)(node)}
-            />
-          </Animated.View>
-        </PanGestureHandler>
-        
-        {/* Display node name if selected or connected or being dragged */}
-        {(isSelected || isConnected || isDragging) && (
-          <G x={node.x} y={node.y + node.radius + 15}>
-            <SvgText
-              x={0}
-              y={0}
-              textAnchor="middle"
-              fill="#FFFFFF"
-              fontWeight="bold"
-              fontSize={12}
-            >
-              {node.name}
-            </SvgText>
-          </G>
-        )}
-      </React.Fragment>
-    );
-  }, [selectedNode, draggingNode, links, handleNodePress, createNodeDragHandler, scale.value]);
+  // Render video item
+  const renderVideoItem = ({ item }: { item: { id: string, title: string, duration: string } }) => (
+    <View style={styles.videoItem}>
+      <View style={styles.videoThumbnail}>
+        <Text style={styles.videoPlayIcon}>▶</Text>
+      </View>
+      <View style={styles.videoInfo}>
+        <Text style={styles.videoTitle}>{item.title}</Text>
+        <Text style={styles.videoDuration}>{item.duration}</Text>
+      </View>
+    </View>
+  );
   
   return (
-    <SafeAreaView 
-      style={styles.container}
-    >
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Knowledge Graph</Text>
         <Text style={styles.subtitle}>Explore your interconnected notes</Text>
       </View>
       
-      <PinchGestureHandler
-        onGestureEvent={pinchHandler as any}
-        onHandlerStateChange={({ nativeEvent }) => {
-          if (nativeEvent.state === State.END) {
-            // Additional logic if needed
-          }
-        }}
-        enabled={draggingNode === null} // Disable pinch while dragging
-      >
-        <Animated.View style={styles.graphContainer}>
-          <PanGestureHandler 
-            onGestureEvent={panHandler as any}
-            enabled={draggingNode === null} // Disable pan while dragging
-          >
-            <Animated.View style={[styles.graphView, animatedStyle]}>
-              <Svg width={width} height={height * 0.8}>
-                <G>
-                  {/* Draw links */}
-                  {links.map((link, i) => {
-                    const sourceId = typeof link.source === 'number' ? link.source : link.source.id;
-                    const targetId = typeof link.target === 'number' ? link.target : link.target.id;
-                    
-                    const source = nodes.find(n => n.id === sourceId);
-                    const target = nodes.find(n => n.id === targetId);
-                    
-                    if (!source || !target || source.x === undefined || source.y === undefined || 
-                        target.x === undefined || target.y === undefined) return null;
-                    
-                    const isHighlighted = 
-                      selectedNode && 
-                      (selectedNode.id === source.id || selectedNode.id === target.id);
-                      
-                    return (
-                      <Line
-                        key={`link-${i}`}
-                        x1={source.x}
-                        y1={source.y}
-                        x2={target.x}
-                        y2={target.y}
-                        stroke={isHighlighted ? "#FFFFFF" : "#444444"}
-                        strokeWidth={isHighlighted ? 2 : 1}
-                        strokeOpacity={isHighlighted ? 0.9 : 0.5}
-                      />
-                    );
-                  })}
+      <View style={styles.graphContainer}>
+        <Svg width={width} height={height * 0.8}>
+          <G>
+            {/* Draw links */}
+            {links.map((link, i) => {
+              const sourceId = typeof link.source === 'number' ? link.source : link.source.id;
+              const targetId = typeof link.target === 'number' ? link.target : link.target.id;
+              
+              const source = nodes.find(n => n.id === sourceId);
+              const target = nodes.find(n => n.id === targetId);
+              
+              if (!source || !target || source.x === undefined || source.y === undefined || 
+                  target.x === undefined || target.y === undefined) return null;
+              
+              const isHighlighted = 
+                selectedNode && 
+                (selectedNode.id === source.id || selectedNode.id === target.id);
+                
+              return (
+                <Line
+                  key={`link-${i}`}
+                  x1={source.x}
+                  y1={source.y}
+                  x2={target.x}
+                  y2={target.y}
+                  stroke={isHighlighted ? "#FFFFFF" : "#444444"}
+                  strokeWidth={isHighlighted ? 2 : 1}
+                  strokeOpacity={isHighlighted ? 0.9 : 0.5}
+                />
+              );
+            })}
+            
+            {/* Draw nodes */}
+            {nodes.map((node) => {
+              if (node.x === undefined || node.y === undefined) return null;
+              
+              const isSelected = selectedNode?.id === node.id;
+              
+              // Check if the node is connected to the selected node
+              const isConnected = selectedNode && links.some(link => {
+                const sourceId = typeof link.source === 'number' ? link.source : link.source.id;
+                const targetId = typeof link.target === 'number' ? link.target : link.target.id;
+                
+                return (
+                  (sourceId === selectedNode.id && targetId === node.id) ||
+                  (targetId === selectedNode.id && sourceId === node.id)
+                );
+              });
+              
+              return (
+                <React.Fragment key={`node-${node.id}`}>
+                  {/* Glow effect for selected/connected nodes */}
+                  {(isSelected || isConnected) && (
+                    <Circle
+                      cx={node.x}
+                      cy={node.y}
+                      r={node.radius + 6}
+                      fill={node.color}
+                      opacity={0.3}
+                    />
+                  )}
                   
-                  {/* Draw nodes */}
-                  {nodes.map(renderNode)}
-                </G>
-              </Svg>
-            </Animated.View>
-          </PanGestureHandler>
+                  {/* Node circle */}
+                  <Circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={node.radius}
+                    fill={node.color}
+                    opacity={isSelected || !selectedNode || isConnected ? 1 : 0.4}
+                    onPress={() => handleNodePress(node)}
+                  />
+                  
+                  {/* Display node name if selected or connected */}
+                  {(isSelected || isConnected) && (
+                    <G x={node.x} y={node.y + node.radius + 15}>
+                      <SvgText
+                        x={0}
+                        y={0}
+                        textAnchor="middle"
+                        fill="#FFFFFF"
+                        fontWeight="bold"
+                        fontSize={12}
+                      >
+                        {node.name}
+                      </SvgText>
+                    </G>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </G>
+        </Svg>
+      </View>
+      
+      {/* Video Bottom Sheet */}
+      {showVideoSheet && (
+        <Animated.View 
+          style={[
+            styles.videoSheet,
+            { transform: [{ translateY }] }
+          ]}
+        >
+          <View style={styles.videoSheetHeader}>
+            <Text style={styles.videoSheetTitle}>
+              {selectedNode ? `${selectedNode.name} Videos` : 'Videos'}
+            </Text>
+            <Pressable 
+              style={styles.closeButton} 
+              onPress={closeVideoSheet}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </Pressable>
+          </View>
+          
+          <FlatList
+            data={SAMPLE_VIDEOS}
+            renderItem={renderVideoItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.videosList}
+          />
         </Animated.View>
-      </PinchGestureHandler>
+      )}
       
       {/* Node information panel */}
-      {selectedNode && (
+      {/* {selectedNode && (
         <View style={styles.infoPanel}>
           <Text style={styles.infoPanelTitle}>{selectedNode.name}</Text>
           <Text style={styles.infoPanelSubtitle}>
@@ -410,11 +329,11 @@ export default function ExploreScreen() {
             <Text style={styles.buttonText}>Explore Notes</Text>
           </Pressable>
         </View>
-      )}
+      )} */}
       
       <View style={styles.instructions}>
         <Text style={styles.instructionsText}>
-          Pinch to zoom • Drag to move • Tap nodes to explore • Press and drag nodes to rearrange
+          Tap nodes to explore related videos
         </Text>
       </View>
     </SafeAreaView>
@@ -447,9 +366,6 @@ const styles = StyleSheet.create({
   graphContainer: {
     flex: 1,
     overflow: "hidden",
-  },
-  graphView: {
-    flex: 1,
   },
   infoPanel: {
     position: "absolute",
@@ -498,5 +414,83 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     color: "#6B7280",
     textAlign: "center",
+  },
+  // Video sheet styles
+  videoSheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: "#1F2937",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  videoSheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  videoSheetTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FFFFFF",
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  videosList: {
+    padding: 16,
+  },
+  videoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 12,
+  },
+  videoThumbnail: {
+    width: 80,
+    height: 45,
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  videoPlayIcon: {
+    color: '#FFFFFF',
+    fontSize: 20,
+  },
+  videoInfo: {
+    flex: 1,
+  },
+  videoTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  videoDuration: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "#9CA3AF",
   },
 }); 
