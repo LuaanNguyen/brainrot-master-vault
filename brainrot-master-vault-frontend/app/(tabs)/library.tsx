@@ -1,89 +1,152 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Plus } from "lucide-react-native";
+"use client";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { useTheme } from "@/context/ThemeContext";
+import { Folder, Plus } from "lucide-react-native";
 
-export default function LibraryScreen() {
-  const playlists = [
-    { id: "1", name: "Cooking Tips", videoCount: 12 },
-    { id: "2", name: "Workout Routines", videoCount: 8 },
-    { id: "3", name: "Tech Reviews", videoCount: 15 },
-    { id: "4", name: "Travel Guides", videoCount: 6 },
+const LibraryScreen = () => {
+  const { colors } = useTheme();
+
+  // Mock data for playlists/categories
+  const categories = [
+    { id: "1", title: "Educational", videos: 12 },
+    { id: "2", title: "Cooking", videos: 8 },
+    { id: "3", title: "Tech Reviews", videos: 15 },
+    { id: "4", title: "Travel", videos: 6 },
+    { id: "5", title: "Fitness", videos: 10 },
+    { id: "6", title: "DIY Projects", videos: 4 },
+    { id: "7", title: "Fashion", videos: 7 },
+    { id: "8", title: "Gaming", videos: 9 },
   ];
 
+  const renderCategoryItem = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.categoryItem, { borderBottomColor: colors.border }]}
+    >
+      <View
+        style={[styles.categoryIcon, { backgroundColor: colors.text }]}
+      ></View>
+      <View style={styles.categoryInfo}>
+        <Text style={[styles.categoryTitle, { color: colors.text }]}>
+          {item.title}
+        </Text>
+        <Text style={[styles.videoCount, { color: colors.text }]}>
+          {item.videos} videos
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Your Library</Text>
-        <Pressable style={styles.createButton}>
-          <Plus size={24} color="#3B82F6" />
-          <Text style={styles.createButtonText}>New Category</Text>
-        </Pressable>
+        <Text style={[styles.title, { color: colors.text }]}>Your Library</Text>
+        <TouchableOpacity style={styles.addButton}>
+          <Plus color={colors.text} size={24} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
-        {playlists.map((playlist) => (
-          <Pressable key={playlist.id} style={styles.playlistCard}>
-            <View style={styles.playlistInfo}>
-              <Text style={styles.playlistName}>{playlist.name}</Text>
-              <Text style={styles.playlistCount}>
-                {playlist.videoCount} videos
-              </Text>
-            </View>
-          </Pressable>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterButton, { backgroundColor: colors.primary }]}
+        >
+          <Text style={styles.filterButtonText}>Categories</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.filterButtonText, { color: colors.text }]}>
+            Recently Added
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <FlatList
+        data={categories}
+        renderItem={renderCategoryItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+      />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: 40,
     flex: 1,
-    backgroundColor: "#111111",
   },
   header: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#222222",
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: "Inter_700Bold",
-    color: "#FFFFFF",
-    marginBottom: 16,
-  },
-  createButton: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  createButtonText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: "#3B82F6",
-    marginLeft: 8,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  playlistCard: {
-    backgroundColor: "#1F2937",
-    borderRadius: 12,
+    justifyContent: "space-between",
     padding: 16,
-    marginBottom: 12,
   },
-  playlistInfo: {
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  addButton: {
+    padding: 8,
+  },
+  filterContainer: {
+    flexDirection: "row",
+    padding: 16,
+    paddingTop: 0,
+  },
+  filterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "transparent",
+    backgroundColor: "#3B82F6", // Blue for active, dark gray for inactive
+  },
+  filterButtonText: {
+    color: "white",
+    fontWeight: "500",
+  },
+  list: {
+    paddingBottom: 100,
+    marginLeft: 10,
+    marginRight: 10,
+  },
+  categoryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 0.5,
+    borderColor: "gray",
+  },
+  categoryIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 4,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  categoryInfo: {
     flex: 1,
   },
-  playlistName: {
-    fontSize: 18,
-    fontFamily: "Inter_600SemiBold",
-    color: "#FFFFFF",
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: "500",
     marginBottom: 4,
   },
-  playlistCount: {
+  videoCount: {
     fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: "#9CA3AF",
+    opacity: 0.7,
   },
 });
+
+export default LibraryScreen;
