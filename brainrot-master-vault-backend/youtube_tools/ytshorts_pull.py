@@ -98,48 +98,56 @@ def download_audio(url, video_id):
     # Ensure output directory exists
     output_dir = "extracted_audio"
     os.makedirs(output_dir, exist_ok=True)
-   # if COOKIES is set in .env, use it
-    print(f"Using cookies: {cookies}")
-    if cookies:
-        # Use yt-dlp with cookies directly from env var
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
-            'cookies': cookies
-        }
-        print("Using cookies.txt for authentication.")
-    else: 
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
-        }
+    
     # check if audio file already exists
     if os.path.exists(os.path.join(output_dir, f"{video_id}.mp3")):
         print("Audio file already exists.")
         return
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-
-# Test youtube short = https://www.youtube.com/shorts/o4XRpgyz2O8
-# if __name__ == "__main__":
-#     url = "https://www.youtube.com/shorts/o4XRpgyz2O8"
-#     video_id = get_youtube_video_id(url)
-#     print(f"Video ID: {video_id}")
     
-#     video_details = get_youtube_video_details(video_id)
-#     # print(f"Video Details: {video_details}")
-
-#     parsed_details = parse_video_details(video_details)
-#     print(f"Parsed Video Details: {parsed_details}")
-
-#     download_audio(url, video_id)
+    # Base options for yt-dlp
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
+        'quiet': False,  # Set to True to reduce output
+        'no_warnings': False,  # Set to True to ignore warnings
+        'ignoreerrors': True,  # Continue on download errors
+        'verbose': True,  # For troubleshooting
+    }
+    
+    # If cookies are provided, add them to the options
+    if cookies:
+        print("Using cookies from environment variable")
+        
+        # Option 1: If cookies is a path to a Netscape cookies file
+        if os.path.isfile(cookies):
+            ydl_opts['cookiefile'] = cookies
+        # Option 2: If cookies is a string containing cookie data
+        else:
+            # Create a temporary cookie file
+            import tempfile
+            cookie_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
+            try:
+                with open(cookie_file.name, 'w') as f:
+                    f.write(cookies)
+                ydl_opts['cookiefile'] = cookie_file.name
+                
+                # Attempt the download
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+            finally:
+                # Clean up the temporary file
+                os.unlink(cookie_file.name)
+                return
+    
+    # If we didn't use the temporary file approach above, use the standard download
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+    except Exception as e:
+        print(f"Error downloading audio: {e}")
+        print("Try using a cookies file from a browser export. See https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp")
