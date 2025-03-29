@@ -128,34 +128,21 @@ def download_audio(url, video_id):
             ydl_opts['cookiefile'] = cookies
             print(f"Using cookie file at path: {cookies}")
         else:
-            print("Using cookies directly from environment variable")
-            
-            # Create temporary file but with better handling
+            # Create a temporary file with the cookie content
             import tempfile
             cookie_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
-            cookie_path = cookie_file.name
-            cookie_file.close()  # Close it properly first
             
             try:
-                # Ensure cookies are in correct Netscape format
-                cookie_content = cookies.strip()
-                # If cookies don't start with Netscape format header, add it
-                if not cookie_content.startswith("# Netscape HTTP Cookie File"):
-                    cookie_content = "# Netscape HTTP Cookie File\n" + cookie_content
+                # Write the cookie content directly to the file
+                with open(cookie_file.name, 'w') as f:
+                    f.write(cookies)
                 
-                # Write the properly formatted cookies
-                with open(cookie_path, 'w') as f:
-                    f.write(cookie_content)
-                
-                print(f"Created properly formatted cookie file at: {cookie_path}")
-                ydl_opts['cookiefile'] = cookie_path
+                print(f"Created temporary cookie file at: {cookie_file.name}")
+                ydl_opts['cookiefile'] = cookie_file.name
                 
                 # Try to download with the cookie file
                 try:
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        info = ydl.extract_info(url, download=False)
-                        print(f"Successfully authenticated for {video_id}")
-                        # Now actually download
                         ydl.download([url])
                     print(f"Successfully downloaded audio for {video_id}")
                     return
@@ -165,10 +152,9 @@ def download_audio(url, video_id):
             finally:
                 # Clean up the temporary file
                 try:
-                    os.unlink(cookie_path)
-                    print(f"Removed temporary cookie file: {cookie_path}")
-                except Exception as e:
-                    print(f"Failed to remove temporary file: {e}")
+                    os.unlink(cookie_file.name)
+                except:
+                    pass
     
     # Try without cookies as a last resort
     print("Attempting download without cookies")
