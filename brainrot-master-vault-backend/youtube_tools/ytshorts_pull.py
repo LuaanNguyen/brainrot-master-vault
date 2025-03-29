@@ -9,7 +9,6 @@ load_dotenv()
 
 google_api_key = os.getenv("GOOGLE_API_KEY")
 cookies = os.getenv("COOKIES")
-
         
 
 def get_youtube_video_id(url):
