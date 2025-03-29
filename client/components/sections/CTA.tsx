@@ -25,13 +25,13 @@ export default function CTA() {
             content.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <motion.button
+            {/* <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
               className="px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 text-white font-medium shadow-lg"
             >
               Get Started Now
-            </motion.button>
+            </motion.button> */}
 
             <Link
               href="/graph-view"
@@ -42,7 +42,7 @@ export default function CTA() {
               })}
             >
               <ChartNetwork className="h-4 w-4" />
-              Explore Topic Graph
+              Explore Knowledge Vault
             </Link>
           </div>
         </div>
