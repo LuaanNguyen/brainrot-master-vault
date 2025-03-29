@@ -131,3 +131,16 @@ async def extract_audio(username: str, video_id: str):
 
     print("Audio extracted successfully.")
         
+@app.get("/metadata")
+async def get_metadata(url: str):
+    """
+    Abstract function to get metadata for TikTok or YouTube based on the URL.
+    """
+    if "tiktok.com" in url:
+        # Call the TikTok handler
+        return await get_tiktok(url)
+    elif "youtube.com" in url or "youtu.be" in url:
+        # Call the YouTube handler
+        return await get_youtube(url)
+    else:
+        return {"error": "Unsupported URL. Please provide a valid TikTok or YouTube URL."}
