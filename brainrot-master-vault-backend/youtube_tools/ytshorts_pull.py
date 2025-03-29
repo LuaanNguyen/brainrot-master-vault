@@ -99,10 +99,7 @@ def download_audio(url, video_id):
     os.makedirs(output_dir, exist_ok=True)
    # if COOKIES is set in .env, use it
     if os.getenv("COOKIES"):
-        # Write cookies to a file
-        with open("cookies.txt", "w") as f:
-            f.write(os.getenv("COOKIES"))
-        # Use yt-dlp with cookies
+        # Use yt-dlp with cookies directly from env var
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -111,7 +108,7 @@ def download_audio(url, video_id):
                 'preferredquality': '192',
             }],
             'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
-            'cookiefile': "cookies.txt"
+            'cookies': os.getenv("COOKIES")
         }
         print("Using cookies.txt for authentication.")
     else: 
