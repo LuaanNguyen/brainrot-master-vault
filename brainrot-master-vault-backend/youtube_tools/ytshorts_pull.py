@@ -119,35 +119,90 @@ def download_audio(url, video_id):
         'verbose': True,  # For troubleshooting
     }
     
-    # If cookies are provided, add them to the options
+    # Handle cookies if provided
     if cookies:
         print("Using cookies from environment variable")
         
         # Option 1: If cookies is a path to a Netscape cookies file
         if os.path.isfile(cookies):
             ydl_opts['cookiefile'] = cookies
-        # Option 2: If cookies is a string containing cookie data
+            print(f"Using cookie file at path: {cookies}")
+        # Option 2: If cookies might be JSON format, try to convert to Netscape format
         else:
-            # Create a temporary cookie file
             import tempfile
-            cookie_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
             try:
-                with open(cookie_file.name, 'w') as f:
-                    f.write(cookies)
-                ydl_opts['cookiefile'] = cookie_file.name
+                # Check if it looks like JSON
+                if cookies.strip().startswith('{') or cookies.strip().startswith('['):
+                    print("Detected JSON format cookies, converting to Netscape format")
+                    import json
+                    
+                    # Create temporary file for Netscape format cookies
+                    cookie_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
+                    
+                    try:
+                        cookie_data = json.loads(cookies)
+                        
+                        # Convert JSON to Netscape format
+                        # Format: domain\tHTTP_ONLY\tpath\tSECURE\texpiry\tname\tvalue
+                        with open(cookie_file.name, 'w') as f:
+                            f.write("# Netscape HTTP Cookie File\n")  # Important header
+                            for cookie in cookie_data:
+                                if isinstance(cookie, dict) and 'domain' in cookie and 'name' in cookie and 'value' in cookie:
+                                    domain = cookie.get('domain', '')
+                                    http_only = str(cookie.get('httpOnly', 'FALSE')).upper()
+                                    path = cookie.get('path', '/')
+                                    secure = str(cookie.get('secure', 'FALSE')).upper()
+                                    expiry = str(int(cookie.get('expirationDate', 0)))
+                                    name = cookie.get('name', '')
+                                    value = cookie.get('value', '')
+                                    
+                                    f.write(f"{domain}\t{http_only}\t{path}\t{secure}\t{expiry}\t{name}\t{value}\n")
+                        
+                        ydl_opts['cookiefile'] = cookie_file.name
+                        print(f"Created Netscape cookie file at: {cookie_file.name}")
+                    except json.JSONDecodeError:
+                        # Not valid JSON, try as direct Netscape format
+                        cookie_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
+                        with open(cookie_file.name, 'w') as f:
+                            # Ensure file starts with proper header if not present
+                            if not cookies.startswith("# Netscape HTTP Cookie File"):
+                                f.write("# Netscape HTTP Cookie File\n")
+                            f.write(cookies)
+                        ydl_opts['cookiefile'] = cookie_file.name
+                        print(f"Using direct cookie content in Netscape format: {cookie_file.name}")
+                else:
+                    # Likely direct Netscape format
+                    cookie_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
+                    with open(cookie_file.name, 'w') as f:
+                        # Ensure file starts with proper header if not present
+                        if not cookies.startswith("# Netscape HTTP Cookie File"):
+                            f.write("# Netscape HTTP Cookie File\n")
+                        f.write(cookies)
+                    ydl_opts['cookiefile'] = cookie_file.name
+                    print(f"Using direct cookie content in Netscape format: {cookie_file.name}")
                 
-                # Attempt the download
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
-            finally:
-                # Clean up the temporary file
-                os.unlink(cookie_file.name)
-                return
+                # Try to download with the processed cookies
+                try:
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        ydl.download([url])
+                    print(f"Successfully downloaded audio for {video_id}")
+                finally:
+                    # Clean up temporary file
+                    os.unlink(cookie_file.name)
+                    return
+                    
+            except Exception as e:
+                print(f"Error processing cookies: {e}")
+                print("Please provide cookies in Netscape format. See https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp")
     
-    # If we didn't use the temporary file approach above, use the standard download
+    # If no cookies or cookie processing failed, try without cookies
+    print("Attempting download without cookies or with direct cookie file")
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
+        print(f"Successfully downloaded audio for {video_id}")
     except Exception as e:
         print(f"Error downloading audio: {e}")
-        print("Try using a cookies file from a browser export. See https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp")
+        print("For YouTube bot detection errors, you need valid Netscape format cookies.")
+        print("See https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp")
+        print("Try using --cookies-from-browser chrome/firefox/etc to extract cookies in correct format")
