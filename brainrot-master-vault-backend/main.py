@@ -5,7 +5,8 @@ import os
 import pyktok as pyk
 from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
-from youtube_tools.db_commands import init_db # Import init_db
+from youtube_tools.db_commands import init_db
+from youtube_tools.db_commands import get_all
 
 # Lifespan context manager to run init_db on startup
 @asynccontextmanager
@@ -66,3 +67,13 @@ async def get_tiktok(tiktok_url: str):
 
     print("Tiktok video downloaded successfully.")
     return data[0] if data else {"error": "No data found"}
+
+@app.get("/home")
+async def get_home():
+    # Get all cached videos from the database and return them
+    all_videos = get_all()
+    if all_videos:
+        return all_videos
+    else:
+        return {"error": "No cached videos found"}
+     
