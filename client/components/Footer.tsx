@@ -2,24 +2,25 @@
 
 import React from "react";
 import Link from "next/link";
+import { ChartNetwork } from "lucide-react";
 
 export default function Footer() {
   return (
     <footer className="w-full border-t bg-background/95 backdrop-blur-sm">
       <div className="container flex flex-col gap-8 px-4 py-10 md:px-6 lg:py-16">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 font-bold">
-              <div className="size-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground">
-                B
+          <div className="space-y-4 md:col-span-2">
+            <div className="flex items-center gap-2 font-bold ">
+              <div className="size-8 rounded-lg bg-[#63e2ff] flex items-center justify-center text-primary-foreground">
+                <ChartNetwork />
               </div>
               <span>Brainrot Master Vault</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              The all-in-one productive podcast platform to replace doom
+              The all-in-one productive podcast platform <br /> to replace doom
               scrolling with passive learning.
             </p>
-            <div className="flex gap-4">
+            <div className="flex gap-4 ">
               <Link
                 href="#"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -84,7 +85,7 @@ export default function Footer() {
               </Link>
             </div>
           </div>
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <h4 className="text-sm font-bold">Product</h4>
             <ul className="space-y-2 text-sm">
               <li>
@@ -120,7 +121,7 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
           <div className="space-y-4">
             <h4 className="text-sm font-bold">Resources</h4>
             <ul className="space-y-2 text-sm">
@@ -129,7 +130,7 @@ export default function Footer() {
                   href="#"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Documentation
+                  Getting Started
                 </Link>
               </li>
               <li>
@@ -137,25 +138,25 @@ export default function Footer() {
                   href="#"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Guides
+                  Documentation
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   href="#"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Blog
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link
                   href="#"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Support
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
           <div className="space-y-4">
@@ -198,7 +199,7 @@ export default function Footer() {
         </div>
         <div className="flex flex-col gap-4 sm:flex-row justify-between items-center border-t border-border/40 pt-8">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Brainrot Master Vault. All rights
+            &copy; {new Date().getFullYear()} HackPrinceton. All rights
             reserved.
           </p>
           <div className="flex gap-4">

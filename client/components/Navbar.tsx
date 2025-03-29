@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronRight, Menu, Moon, Sun, X } from "lucide-react";
+import { ChevronRight, Menu, Moon, Sun, X, ChartNetwork } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 
@@ -33,8 +33,11 @@ export default function Navbar({
       }`}
     >
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2 font-bold">
-          <span>Brainrot Master Vault 🧠</span>
+        <div className="flex items-center gap-2 font-bold ">
+          <div className="size-8 rounded-lg bg-[#63e2ff] flex items-center justify-center text-primary-foreground">
+            <ChartNetwork />
+          </div>
+          <span>Brainrot Master Vault</span>
         </div>
         <div className="hidden md:flex gap-4 items-center">
           <Button
@@ -50,7 +53,7 @@ export default function Navbar({
             )}
             <span className="sr-only">Toggle theme</span>
           </Button>
-          <Button className="rounded-full">
+          <Button className="rounded-full bg-[#63e2ff] text-black">
             Get Started
             <ChevronRight className="ml-1 size-4" />
           </Button>
@@ -78,7 +81,7 @@ export default function Navbar({
             ) : (
               <Menu className="size-5" />
             )}
-            <span className="sr-only">Toggle menu</span>
+            <span className="sr-only ">Toggle menu</span>
           </Button>
         </div>
       </div>
@@ -120,8 +123,8 @@ export default function Navbar({
             >
               FAQ
             </Link>
-            <div className="flex flex-col gap-2 pt-2 border-t">
-              <Button className="rounded-full">
+            <div className="flex flex-col gap-2 pt-2 border-t ">
+              <Button className="rounded-full bg-[#63e2ff] text-black">
                 Get Started
                 <ChevronRight className="ml-1 size-4" />
               </Button>

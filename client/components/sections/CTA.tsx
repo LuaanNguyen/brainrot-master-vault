@@ -21,11 +21,11 @@ export default function CTA() {
           className="flex flex-col items-center justify-center space-y-6 text-center"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
-            Ready to Transform Your Workflow?
+            Ready to Transform <br /> How You Comsume Contents?
           </h2>
           <p className="mx-auto max-w-[700px] text-primary-foreground/80 md:text-xl">
-            Join thousands of satisfied customers who have streamlined their
-            processes and boosted productivity with our platform.
+            Join with people who have streamlined their processes and boosted
+            productivity with our platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mt-4">
             <Button
@@ -33,7 +33,7 @@ export default function CTA() {
               variant="secondary"
               className="rounded-full h-12 px-8 text-base"
             >
-              Start Free Trial
+              Getting Started
               <ArrowRight className="ml-2 size-4" />
             </Button>
             <Button
@@ -41,12 +41,9 @@ export default function CTA() {
               variant="outline"
               className="rounded-full h-12 px-8 text-base bg-transparent border-white text-white hover:bg-white/10"
             >
-              Schedule a Demo
+              Meet our Team
             </Button>
           </div>
-          <p className="text-sm text-primary-foreground/80 mt-4">
-            No credit card required. 14-day free trial. Cancel anytime.
-          </p>
         </motion.div>
       </div>
     </section>

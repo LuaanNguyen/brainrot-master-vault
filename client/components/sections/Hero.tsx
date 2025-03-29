@@ -36,10 +36,17 @@ export default function Hero() {
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full h-12 px-8 text-base"
+              className="rounded-full h-12 px-8 text-base bg-[#63e2ff] text-black"
             >
               Try Now
               <ChevronRight className="ml-1 size-4" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-full h-12 px-8 text-base bg-transparent border-white text-white hover:bg-white/10"
+            >
+              View Your Vault
             </Button>
           </div>
           <div className="flex items-center justify-center gap-4 mt-6 text-sm text-muted-foreground">

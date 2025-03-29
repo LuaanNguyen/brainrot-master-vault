@@ -130,10 +130,10 @@ export default function LandingPage() {
       <main className="flex-1">
         <Hero />
         <Features />
-        <HowItWorks />
-        <Testimonials />
+        {/* <HowItWorks />
+        <Testimonials /> 
         <Pricing />
-        <FAQ />
+        <FAQ /> */}
         <CTA />
       </main>
       <Footer />
