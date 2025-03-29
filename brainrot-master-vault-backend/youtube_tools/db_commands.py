@@ -3,8 +3,8 @@ import json
 import os
 
 # Define the path for the database file relative to this script's location
-if os.path.exists('/db/cache'):
-    DB_DIR = os.path.dirname("/db/cache")
+if os.path.exists('/db/cache/'):
+    DB_DIR = os.path.dirname("/db/cache/")
 else:
     # Fallback to the current directory if the path doesn't exist
     DB_DIR = os.path.dirname(os.path.abspath(__file__))
