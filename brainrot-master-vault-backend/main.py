@@ -4,6 +4,7 @@ import csv
 import os
 import re
 import pyktok as pyk
+import requests
 from moviepy import VideoFileClip
 from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
@@ -102,7 +103,7 @@ async def get_tiktok(tiktok_url: str):
 
     print("Tiktok video downloaded successfully.")
     
-    await extract_audio(username, video_id)
+    transcribed_text = await extract_audio(username, video_id)
     print("Audio extracted successfully.")
 
     result = {}
@@ -113,7 +114,7 @@ async def get_tiktok(tiktok_url: str):
     result['publishedAt'] = data['video_timestamp']
     result['thumbnail'] = None
     result['channelTitle'] = data['author_name']
-
+    result['transcription'] = transcribed_text
 
     return result if result else {"error": "Failed to extract video data"}
 
@@ -122,8 +123,22 @@ async def extract_audio(username: str, video_id: str):
     video_clip = VideoFileClip(mp4_file_url) if mp4_file_url else None
 
     mp3_file = mp4_file_url.replace('.mp4', '.mp3') if mp4_file_url else None
-    mp3_file = ("./tiktok_audio/" + mp3_file) if mp3_file else None
+
+    # Ensure output directory exists
+    if os.path.exists('/db/cache/'):
+        output_dir = os.path.dirname("/db/cache/tiktok_audio")
+    else:
+        # Fallback to the current directory if the path doesn't exist
+        output_dir = "extracted_audio" 
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Check if audio file already exists
+    if os.path.exists(os.path.join(output_dir, mp3_file)):
+        print("Audio file already exists.")
+        return
     
+    mp3_file = os.path.join(output_dir, mp3_file)
+    # Check if the mp4 file exists before attempting to extract audio
     if video_clip and mp3_file:
         video_clip.audio.write_audiofile(mp3_file)
         video_clip.close()
@@ -131,6 +146,27 @@ async def extract_audio(username: str, video_id: str):
         print("Video file removed successfully.")
 
     print("Audio extracted successfully.")
+
+    # Call the transcribe function with the mp3 file path
+    print("Transcribing audio...")
+    transcribed_text = await transcribe(mp3_file)
+    print("Transcription completed.")
+
+    return transcribed_text
+
+async def transcribe(mp3_file: str):
+    """
+    Placeholder function for transcribing audio files.
+    """
+    # Implement transcription logic here
+    transcribe_api_url = "https://ngavu2004--brainrot-mastervault-whisper-large-v3-handle--85d537.modal.run/"
+
+    # Make a POST request to the transcription API with the audio file
+    with open(mp3_file, "rb") as file:
+        response = requests.post(transcribe_api_url, files={"file": file})
+    
+    transcribed_text = print(response.json())
+    return transcribed_text
         
 @app.get("/metadata")
 async def get_metadata(url: str):

@@ -95,7 +95,7 @@ def download_audio(url, video_id):
     Downloads audio from a YouTube URL using yt-dlp.
     """
     # Ensure output directory exists
-    if os.path.exists('/db/cache'):
+    if os.path.exists('/db/cache/'):
         output_dir = os.path.dirname("/db/cache/extracted_audio")
     else:
         # Fallback to the current directory if the path doesn't exist
