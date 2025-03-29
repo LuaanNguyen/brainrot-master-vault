@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import yt_dlp
 from .db_commands import get_cached_response, cache_response # Import cache functions
 
+
 load_dotenv()
 
 google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -96,16 +97,30 @@ def download_audio(url, video_id):
     # Ensure output directory exists
     output_dir = "extracted_audio"
     os.makedirs(output_dir, exist_ok=True)
-    
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-        'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
-    }
+   # if cookies.txt exists, use it
+    cookies_path = os.path.join(os.path.dirname(__file__), "cookies.txt")
+    if os.path.exists(cookies_path):
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
+            'cookiefile': "cookies.txt"
+        }
+        print("Using cookies.txt for authentication.")
+    else: 
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
+        }
     # check if audio file already exists
     if os.path.exists(os.path.join(output_dir, f"{video_id}.mp3")):
         print("Audio file already exists.")
