@@ -10,6 +10,7 @@ import {
   StatusBar,
   FlatList,
 } from "react-native";
+import { router } from "expo-router";
 
 // Filter component
 const FilterTabs = ({ activeTab, setActiveTab }) => {
@@ -41,9 +42,18 @@ const FilterTabs = ({ activeTab, setActiveTab }) => {
 };
 
 // Music Item Component
+// Music Item Component
 const MusicItem = ({ item }) => {
+  const handlePress = () => {
+    // Navigate to a detail page with the item ID
+    router.push({
+      pathname: "/PlaylistDetail",
+      params: { id: item.id, title: item.title },
+    });
+  };
+
   return (
-    <TouchableOpacity style={styles.musicItem}>
+    <TouchableOpacity style={styles.musicItem} onPress={handlePress}>
       <Image source={{ uri: item.imageUrl }} style={styles.musicCover} />
       <View style={styles.musicInfo}>
         <Text style={styles.musicTitle}>{item.title}</Text>
