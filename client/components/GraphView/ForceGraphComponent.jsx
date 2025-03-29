@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import ForceGraph from "force-graph";
+import * as d3 from "d3";
 
 // Sample data
 const sampleData = {
@@ -14,18 +15,47 @@ const sampleData = {
     { id: "art", name: "Art & Culture", color: "#1A535C", val: 20 },
     { id: "fitness", name: "Fitness & Health", color: "#9BC53D", val: 20 },
     { id: "finance", name: "Finance", color: "#5C2A9D", val: 20 },
+    { id: "music", name: "Music", color: "#E84A5F", val: 20 },
+    { id: "books", name: "Books & Literature", color: "#355C7D", val: 20 },
+    { id: "movies", name: "Movies & TV", color: "#FFA69E", val: 20 },
+    { id: "gaming", name: "Gaming", color: "#2A9D8F", val: 20 },
+    { id: "education", name: "Education", color: "#E63946", val: 20 },
+    { id: "fashion", name: "Fashion", color: "#9D4EDD", val: 20 },
+    { id: "nature", name: "Nature & Environment", color: "#40916C", val: 20 },
+    { id: "politics", name: "Politics", color: "#457B9D", val: 20 },
   ],
   links: [
     { source: "food", target: "science" },
     { source: "food", target: "fitness" },
+    { source: "food", target: "nature" },
     { source: "tech", target: "science" },
     { source: "tech", target: "finance" },
+    { source: "tech", target: "gaming" },
+    { source: "tech", target: "education" },
     { source: "travel", target: "art" },
+    { source: "travel", target: "nature" },
+    { source: "travel", target: "books" },
     { source: "science", target: "history" },
+    { source: "science", target: "education" },
+    { source: "science", target: "nature" },
     { source: "history", target: "art" },
+    { source: "history", target: "books" },
+    { source: "history", target: "politics" },
+    { source: "art", target: "music" },
+    { source: "art", target: "fashion" },
+    { source: "art", target: "movies" },
     { source: "fitness", target: "food" },
     { source: "fitness", target: "science" },
+    { source: "fitness", target: "nature" },
     { source: "finance", target: "history" },
+    { source: "finance", target: "politics" },
+    { source: "music", target: "movies" },
+    { source: "books", target: "education" },
+    { source: "books", target: "movies" },
+    { source: "movies", target: "gaming" },
+    { source: "education", target: "politics" },
+    { source: "fashion", target: "music" },
+    { source: "nature", target: "politics" },
   ],
 };
 
@@ -48,13 +78,20 @@ export default function ForceGraphComponent({ onNodeClick }) {
       .linkWidth(2)
       .onNodeClick((node) => {
         if (onNodeClick) onNodeClick(node);
-      });
+      })
+      // Modify the force parameters correctly
+      .d3AlphaDecay(0.02)
+      .d3VelocityDecay(0.3)
+      // Use d3Force to configure the link distance through the link force
+      .d3Force("link", d3.forceLink().distance(100).strength(0.3))
+      // Adjust the charge force for repulsion
+      .d3Force("charge", d3.forceManyBody().strength(-150));
 
     // Position nodes in a circle
     const nodes = sampleData.nodes;
     const numNodes = nodes.length;
     const angleStep = (2 * Math.PI) / numNodes;
-    const radius = 250;
+    const radius = 350; // Increased from 250 to 350 for wider initial spacing
 
     nodes.forEach((node, i) => {
       const angle = i * angleStep;
