@@ -8,6 +8,7 @@ from .db_commands import get_cached_response, cache_response # Import cache func
 load_dotenv()
 
 google_api_key = os.getenv("GOOGLE_API_KEY")
+cookies = os.getenv("COOKIES")
 
         
 
@@ -97,9 +98,9 @@ def download_audio(url, video_id):
     # Ensure output directory exists
     output_dir = "extracted_audio"
     os.makedirs(output_dir, exist_ok=True)
-   # if cookies.txt exists, use it
-    cookies_path = os.path.join(os.path.dirname(__file__), "cookies.txt")
-    if os.path.exists(cookies_path):
+   # if COOKIES is set in .env, use it
+    if cookies:
+        # Use yt-dlp with cookies directly from env var
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -108,7 +109,7 @@ def download_audio(url, video_id):
                 'preferredquality': '192',
             }],
             'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
-            'cookiefile': "cookies.txt"
+            'cookies': cookies
         }
         print("Using cookies.txt for authentication.")
     else: 
