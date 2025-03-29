@@ -28,7 +28,7 @@ Use [Perplexity Deep Research](https://www.perplexity.ai/?model_id=deep_research
 - Knowledge vaults to share with friends 
 - Filtering out unproductive contents (Smart Filtering)
 - List + Node representation (Intelligent Organization)
-- Content Discover: Tiktok suggestions for good contents (Use [knotapi](https://www.knotapi.com/))
+- Content Discover: Tiktok suggestions for good contents
 - Sort using hashtags 
 
 
