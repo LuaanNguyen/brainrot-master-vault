@@ -1,8 +1,20 @@
 from fastapi import FastAPI
 import re as regex
+from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
+from youtube_tools.db_commands import init_db # Import init_db
 
-app = FastAPI()
+# Lifespan context manager to run init_db on startup
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Initializing database...")
+    init_db()
+    print("Database initialization complete.")
+    yield
+    # Add cleanup logic here if needed in the future
+    print("Application shutting down.")
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def root():
@@ -29,6 +41,3 @@ async def get_youtube(video_url: str):
     # Download audio from the video
     download_audio(video_url, video_id)
     return parsed_details
-
-     
-
