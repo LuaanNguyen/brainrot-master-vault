@@ -5,3 +5,4 @@ extracted_audio/
 youtube_tools/youtube_cache.db
 youtube_tools/cookies.txt
 *.mp4
+youtube_audio/

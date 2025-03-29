@@ -45,8 +45,27 @@ async def get_youtube(video_url: str):
     parsed_details = parse_video_details(video_details)
     if not parsed_details:
         return {"error": "Failed to parse video details"}
+
     # Download audio from the video
     download_audio(video_url, video_id)
+
+    # Determine audio file path (mirroring logic in download_audio)
+    if os.path.exists('/db/cache/'):
+        audio_dir = "/db/cache/youtube_audio/"
+    else:
+        audio_dir = "youtube_audio"
+    mp3_file_path = os.path.join(audio_dir, f"{video_id}.mp3")
+
+    # Check if audio file exists before transcribing
+    if os.path.exists(mp3_file_path):
+        print(f"Transcribing audio file: {mp3_file_path}")
+        transcribed_text = await transcribe(mp3_file_path)
+        parsed_details['transcription'] = transcribed_text
+        print("Transcription added to YouTube details.")
+    else:
+        print(f"Audio file not found at {mp3_file_path}, skipping transcription.")
+        parsed_details['transcription'] = None # Or handle as appropriate
+
     return parsed_details
 
 def get_tiktok_username_id(tiktok_url: str) -> str:
@@ -126,10 +145,10 @@ async def extract_audio(username: str, video_id: str):
 
     # Ensure output directory exists
     if os.path.exists('/db/cache/'):
-        output_dir = os.path.dirname("/db/cache/tiktok_audio")
+        output_dir = os.path.dirname("/db/cache/tiktok_audio/")
     else:
         # Fallback to the current directory if the path doesn't exist
-        output_dir = "extracted_audio" 
+        output_dir = "tiktok_audio" 
     os.makedirs(output_dir, exist_ok=True)
 
     # Check if audio file already exists
