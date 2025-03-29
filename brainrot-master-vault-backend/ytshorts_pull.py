@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import yt_dlp
 
 load_dotenv()
 
@@ -58,7 +59,31 @@ def parse_video_details(video_details: dict):
         "channelTitle": snippet.get("channelTitle"),
         "tags": snippet.get("tags"),
     }
+
+# Download audio from url using yt-dlp   
+def download_audio(url, video_id):
+    """
+    Downloads audio from a YouTube URL using yt-dlp.
+    """
+    # Ensure output directory exists
+    output_dir = "extracted_audio"
+    os.makedirs(output_dir, exist_ok=True)
     
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
+    }
+    # check if audio file already exists
+    if os.path.exists(os.path.join(output_dir, f"{video_id}.mp3")):
+        print("Audio file already exists.")
+        return
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
 # Test youtube short = https://www.youtube.com/shorts/o4XRpgyz2O8
 # if __name__ == "__main__":
@@ -71,3 +96,5 @@ def parse_video_details(video_details: dict):
 
 #     parsed_details = parse_video_details(video_details)
 #     print(f"Parsed Video Details: {parsed_details}")
+
+#     download_audio(url, video_id)

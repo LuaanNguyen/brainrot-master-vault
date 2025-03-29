@@ -1,11 +1,8 @@
 from fastapi import FastAPI
 import re as regex
-from ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details
-
+from ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
 
 app = FastAPI()
-
-
 
 @app.get("/")
 async def root():
@@ -13,7 +10,6 @@ async def root():
 
 # Test youtube short = https://www.youtube.com/shorts/o4XRpgyz2O8
 @app.get("/youtube")
-
 async def get_youtube(video_url: str):
     # Implement url verification using regex
     pattern = r"^(https?://)?(www\.)?(youtube\.com/watch\?v=|youtube\.com/shorts/|youtu\.be/)([a-zA-Z0-9_-]{11})$"
@@ -30,6 +26,8 @@ async def get_youtube(video_url: str):
     parsed_details = parse_video_details(video_details)
     if not parsed_details:
         return {"error": "Failed to parse video details"}
+    # Download audio from the video
+    download_audio(video_url, video_id)
     return parsed_details
 
      
