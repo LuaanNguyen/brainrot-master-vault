@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import yt_dlp
 from .db_commands import get_cached_response, cache_response # Import cache functions
 
+
 load_dotenv()
 
 google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -97,7 +98,8 @@ def download_audio(url, video_id):
     output_dir = "extracted_audio"
     os.makedirs(output_dir, exist_ok=True)
    # if cookies.txt exists, use it
-    if os.path.exists("cookies.txt"):
+    cookies_path = os.path.join(os.path.dirname(__file__), "cookies.txt")
+    if os.path.exists(cookies_path):
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -108,6 +110,7 @@ def download_audio(url, video_id):
             'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
             'cookiefile': "cookies.txt"
         }
+        print("Using cookies.txt for authentication.")
     else: 
         ydl_opts = {
             'format': 'bestaudio/best',
