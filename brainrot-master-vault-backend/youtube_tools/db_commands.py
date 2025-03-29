@@ -3,7 +3,11 @@ import json
 import os
 
 # Define the path for the database file relative to this script's location
-DB_DIR = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists('/db/cache'):
+    DB_DIR = os.path.dirname("/db/cache")
+else:
+    # Fallback to the current directory if the path doesn't exist
+    DB_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(DB_DIR, 'youtube_cache.db')
 
 def init_db():
@@ -63,6 +67,23 @@ def cache_response(video_id: str, response_data: dict):
         conn.commit()
     except sqlite3.Error as e:
         print(f"Database error caching response for {video_id}: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+def get_all(user: str = None):
+    """Fetches all cached videos from the database."""
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT video_id, response_data FROM cache")
+        results = cursor.fetchall()
+        # Convert results to a list of dictionaries
+        return [{"video_id": row[0], "response_data": json.loads(row[1])} for row in results]
+    except sqlite3.Error as e:
+        print(f"Database error fetching all cached videos: {e}")
+        return []
     finally:
         if conn:
             conn.close()
