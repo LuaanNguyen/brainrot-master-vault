@@ -1,6 +1,0 @@
-{
-  "dependencies": {},
-  "devDependencies": {
-    "@types/d3-force": "^3.0.10"
-  }
-}
