@@ -71,6 +71,23 @@ def cache_response(video_id: str, response_data: dict):
         if conn:
             conn.close()
 
+def get_all(user: str = None):
+    """Fetches all cached videos from the database."""
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT video_id, response_data FROM cache")
+        results = cursor.fetchall()
+        # Convert results to a list of dictionaries
+        return [{"video_id": row[0], "response_data": json.loads(row[1])} for row in results]
+    except sqlite3.Error as e:
+        print(f"Database error fetching all cached videos: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
 if __name__ == '__main__':
     # Example usage: Initialize DB when script is run directly
     print("Initializing database from db_commands.py...")

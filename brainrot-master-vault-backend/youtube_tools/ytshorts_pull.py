@@ -99,7 +99,7 @@ def download_audio(url, video_id):
         output_dir = os.path.dirname("/db/cache/extracted_audio")
     else:
         # Fallback to the current directory if the path doesn't exist
-        output_dir = os.path.dirname(os.path.abspath(__file__))
+        output_dir = "extracted_audio" 
     os.makedirs(output_dir, exist_ok=True)
     
     # Check if audio file already exists
