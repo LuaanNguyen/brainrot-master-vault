@@ -13,16 +13,29 @@ import {
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { useEffect } from "react";
 import { LinearGradient } from "expo-linear-gradient";
+import { Audio } from "expo-av";
 
 // Get screen width for responsive sizing
 const { width } = Dimensions.get("window");
 const coverSize = width - 32; // Full width minus padding
 
+// Define interface for Video Item
+interface VideoItemType {
+  id?: string;
+  video_id?: string;
+  source?: string;
+  title?: string;
+  channelTitle?: string;
+  publishedAt?: string;
+  thumbnails?: string; // Assuming string URL, adjust if object
+  response_data?: any; // Keeping this flexible for now
+}
+
 // Format date helper function
-const formatDate = (dateString) => {
+const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
-  const diffTime = Math.abs(now - date);
+  const diffTime = Math.abs(now.getTime() - date.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return "Today";
@@ -32,7 +45,7 @@ const formatDate = (dateString) => {
 };
 
 // Recently Added Item Component
-const RecentlyAddedItem = ({ item }) => {
+const RecentlyAddedItem = ({ item }: { item: VideoItemType }) => {
   // Extract video details from nested response data
   const videoId = item.video_id || item.id;
   const source = item.source || "youtube";
@@ -143,7 +156,10 @@ const RecentlyAddedItem = ({ item }) => {
 
 export default function PlaylistDetail() {
   const { id, title, imageUrl } = useLocalSearchParams();
-  const [videos, setVideos] = useState([]);
+  const [videos, setVideos] = useState<VideoItemType[]>([]);
+  const [filteredVideos, setFilteredVideos] = useState<VideoItemType[]>([]);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     fetch("https://brainrotapi.codestacx.com/home")
@@ -153,13 +169,132 @@ export default function PlaylistDetail() {
       });
   }, []);
 
+  // Filter videos based on playlist title/id
+  useEffect(() => {
+    if (videos.length > 0) {
+      let filtered: VideoItemType[] = [];
+      const playlistTitle = title as string;
+
+      // Case insensitive matching
+      const lcTitle = playlistTitle.toLowerCase();
+
+      if (lcTitle.includes("tech news") || lcTitle.includes("technology")) {
+        filtered = videos.slice(0, 5);
+      } else if (
+        lcTitle.includes("natural disaster") ||
+        lcTitle.includes("weather")
+      ) {
+        filtered = videos.slice(5, 10);
+      } else if (lcTitle.includes("health") || lcTitle.includes("fitness")) {
+        filtered = videos.slice(10, 15);
+      } else if (lcTitle.includes("finance") || lcTitle.includes("investing")) {
+        filtered = videos.slice(15, 20);
+      } else if (lcTitle.includes("food") || lcTitle.includes("cooking")) {
+        filtered = videos.slice(20, 25);
+      } else if (lcTitle.includes("crime")) {
+        filtered = videos.slice(25, 27);
+      } else {
+        // Default case - show all videos or a subset
+        filtered = videos;
+      }
+
+      setFilteredVideos(filtered);
+    }
+  }, [videos, title]);
+
   // Mock playlist data including summary
   const playlistSummary =
     "A curated collection of short clips about the latest tech trends and innovations that are shaping our digital future. Updated regularly with new content.";
 
-  // Count of items and total duration
-  const itemCount = videos.length || 0;
-  const totalDuration = videos.length ? `${videos.length * 2} min` : "0 min"; // Assuming each video is ~2 minutes
+  // Count of items and total duration - now using filteredVideos
+  const itemCount = filteredVideos.length || 0;
+  const totalDuration = filteredVideos.length
+    ? `${filteredVideos.length * 2} min`
+    : "0 min"; // Assuming each video is ~2 minutes
+
+  // Function to handle play/pause
+  async function handlePlayPause() {
+    if (sound) {
+      if (isPlaying) {
+        console.log("Pausing Sound");
+        await sound.pauseAsync();
+        setIsPlaying(false);
+      } else {
+        console.log("Playing Sound");
+        await sound.playAsync();
+        setIsPlaying(true);
+      }
+    } else {
+      console.log("Loading Sound");
+      try {
+        // Determine which audio file to play based on playlist title
+        let audioSource;
+        const playlistTitle = (title as string).toLowerCase();
+
+        if (
+          playlistTitle.includes("tech news") ||
+          playlistTitle.includes("technology")
+        ) {
+          audioSource = require("../assets/podcasts/tech_podcast.mp3");
+        } else if (
+          playlistTitle.includes("natural disaster") ||
+          playlistTitle.includes("weather")
+        ) {
+          audioSource = require("../assets/podcasts/disaster_podcast.mp3");
+        } else if (
+          playlistTitle.includes("health") ||
+          playlistTitle.includes("fitness")
+        ) {
+          audioSource = require("../assets/podcasts/health_podcast.mp3");
+        } else if (
+          playlistTitle.includes("finance") ||
+          playlistTitle.includes("investing")
+        ) {
+          audioSource = require("../assets/podcasts/investing_podcast.mp3");
+        } else if (playlistTitle.includes("education")) {
+          audioSource = require("../assets/podcasts/education_podcast.mp3");
+        } else if (playlistTitle.includes("crime")) {
+          audioSource = require("../assets/podcasts/crime_podcast.mp3");
+        } else {
+          // Default audio if no match is found
+          audioSource = require("../assets/podcasts/tech_podcast.mp3");
+        }
+
+        const { sound: newSound } = await Audio.Sound.createAsync(audioSource);
+        setSound(newSound);
+        console.log("Playing Sound");
+        await newSound.playAsync();
+        setIsPlaying(true);
+
+        // Add listener for when playback finishes
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            setIsPlaying(false);
+            // Optionally unload or reset position
+            // newSound.unloadAsync();
+            // setSound(null);
+            newSound.setPositionAsync(0); // Reset to start
+          } else if (status.isLoaded === false && status.error) {
+            console.error(`Playback Error: ${status.error}`);
+            setIsPlaying(false); // Ensure state is updated on error
+            setSound(null); // Clear the sound object on error
+          }
+        });
+      } catch (error) {
+        console.error("Failed to load or play sound", error);
+      }
+    }
+  }
+
+  // Effect to unload sound on component unmount
+  useEffect(() => {
+    return sound
+      ? () => {
+          console.log("Unloading Sound");
+          sound.unloadAsync();
+        }
+      : undefined;
+  }, [sound]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -180,7 +315,7 @@ export default function PlaylistDetail() {
           {/* Album Cover Image */}
           {imageUrl && (
             <Image
-              source={{ uri: decodeURIComponent(imageUrl) }}
+              source={{ uri: decodeURIComponent(imageUrl as string) }}
               style={styles.coverImage}
               resizeMode="cover"
             />
@@ -197,14 +332,16 @@ export default function PlaylistDetail() {
           </Text>
 
           {/* Play Button with Linear Gradient */}
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handlePlayPause}>
             <LinearGradient
               colors={["#36d0ff", "#4576ff"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.playButton}
             >
-              <Text style={styles.playButtonText}>▶ Summarize</Text>
+              <Text style={styles.playButtonText}>
+                {isPlaying ? "❚❚ Pause" : "▶ Summarize"}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -214,10 +351,10 @@ export default function PlaylistDetail() {
         {/* Content Title */}
         <Text style={styles.sectionTitle}>All Clips</Text>
 
-        {/* Playlist Content */}
+        {/* Playlist Content - now using filteredVideos */}
         <View style={styles.recentlyAddedList}>
-          {videos.length > 0 ? (
-            videos.map((item) => (
+          {filteredVideos.length > 0 ? (
+            filteredVideos.map((item) => (
               <RecentlyAddedItem
                 key={item.id || item.video_id || Math.random().toString()}
                 item={item}
