@@ -41,10 +41,12 @@ const LibraryScreen = () => {
         .then((response) => response.json())
         .then((data) => {
           const videos = data.videos || [];
-          setAllRecentVideos(videos);
-          // Initially show only the first 5 items
-          setVisibleRecentVideos(videos.slice(0, ITEMS_PER_PAGE));
-          setHasReachedEnd(videos.length <= ITEMS_PER_PAGE);
+          // Reverse the order of videos
+          const reversedVideos = [...videos].reverse();
+          setAllRecentVideos(reversedVideos);
+          // Initially show only the first items
+          setVisibleRecentVideos(reversedVideos.slice(0, ITEMS_PER_PAGE));
+          setHasReachedEnd(reversedVideos.length <= ITEMS_PER_PAGE);
           setLoading(false);
         })
         .catch((error) => {
@@ -96,59 +98,49 @@ const LibraryScreen = () => {
   const categories = [
     {
       id: "1",
-      title: "Educational",
-      videos: 12,
+      title: "Tech News",
+      videos: 5,
       imageUrl:
-        "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop", // Tech/circuits image
     },
     {
       id: "2",
-      title: "Cooking",
-      videos: 8,
+      title: "Natural Disasters",
+      videos: 5,
       imageUrl:
-        "https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&auto=format&fit=crop", // Massive wave/storm image
+      showPlayButton: false,
     },
     {
       id: "3",
-      title: "Tech Reviews",
-      videos: 15,
+      title: "Health & Fitness Tips",
+      videos: 5,
       imageUrl:
-        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
+        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop", // Fitness/running image
+      showPlayButton: false,
     },
     {
       id: "4",
-      title: "Travel",
-      videos: 6,
+      title: "Finance & Investing",
+      videos: 5,
       imageUrl:
-        "https://images.unsplash.com/photo-1503220317375-aaad61436b1b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
+        "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop", // Stock charts image
+      showPlayButton: false,
     },
     {
       id: "5",
-      title: "Fitness",
-      videos: 10,
+      title: "Education",
+      videos: 5,
       imageUrl:
-        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
+        "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop", // Education/books image
+      showPlayButton: false,
     },
     {
       id: "6",
-      title: "DIY Projects",
-      videos: 4,
+      title: "Crime",
+      videos: 2,
       imageUrl:
-        "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
-    },
-    {
-      id: "7",
-      title: "Fashion",
-      videos: 7,
-      imageUrl:
-        "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
-    },
-    {
-      id: "8",
-      title: "Gaming",
-      videos: 9,
-      imageUrl:
-        "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
+        "https://images.unsplash.com/photo-1605806616949-1e87b487fc2f?w=800&auto=format&fit=crop", // Prison bars image
     },
   ];
 
