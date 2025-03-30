@@ -33,6 +33,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChartNetwork, Smartphone, Ellipsis } from "lucide-react";
 import Link from "next/link";
 import ProfileSection from "../ProfileSection";
+import TopBar from "./TopBar";
 
 // Import ForceGraphComponent with no SSR to prevent hydration issues
 const ForceGraphComponent = dynamic(() => import("./ForceGraphComponent"), {
@@ -172,6 +173,16 @@ export default function GraphContainer() {
     }
   };
 
+  const handleExport = () => {
+    console.log("Exporting data...");
+    // Add your export logic here
+  };
+
+  const handleMenuClick = () => {
+    // You can implement menu functionality here
+    console.log("Menu clicked");
+  };
+
   return (
     <div
       className={`bg-background rounded-2xl border border-blue-100 overflow-hidden shadow-[0_20px_50px_rgba(8,112,240,0.2)] ${
@@ -237,40 +248,12 @@ export default function GraphContainer() {
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col h-full overflow-hidden">
-          {/* Top search bar */}
-          <div className="flex items-center justify-between gap-2 p-4 border-b w-full">
-            <p className="font-medium">Nga's Vault</p>
-            {/* <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search for videos or topics..."
-                className="pl-8 bg-muted/30"
-              />
-            </div> */}
-            <div className="flex gap-5">
-              {" "}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-                className="flex items-center gap-3 font-bold"
-              >
-                <div className="font-normal px-4 py-1 rounded-lg bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                  Export
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-                className="flex items-center gap-3 font-bold"
-              >
-                <div className="px-1 py-1 rounded-lg flex items-center justify-center border border-gray-100 ">
-                  <Ellipsis />
-                </div>
-              </motion.div>
-            </div>
-          </div>
+          {/* Top search bar - replaced with the new component */}
+          <TopBar
+            title="Nga's Vault"
+            onExport={handleExport}
+            onMenuClick={handleMenuClick}
+          />
 
           {/* Main content with resizable panels */}
           <ResizablePanelGroup
