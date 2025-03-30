@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Chrome as Home, Library, Plus, Search } from "lucide-react-native";
+import { Chrome as Home, Library, Plus, Search,  ChartNetwork } from "lucide-react-native";
 
 export default function TabLayout() {
   return (
@@ -34,6 +34,16 @@ export default function TabLayout() {
           title: "Library",
           tabBarIcon: ({ color, size }) => (
             <Library size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="vault"
+        options={{
+          title: "Vault",
+          tabBarIcon: ({ color, size }) => (
+            <ChartNetwork size={size} color={color} />
           ),
         }}
       />

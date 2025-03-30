@@ -12,6 +12,9 @@
 
 ## Problem with TikTok 
 TikTok's algorithm is specifically engineered to capture and maintain user attention through what psychologists describe as a "flow state" - a condition of intense concentration accompanied by a distorted sense of time. This design feature helps explain why many users find themselves scrolling for hours when they initially intended to spend just minutes on the app
+- high entertainment value with minimal cognitive investment 
+- Unpredictable viral contents 
+
 
 The average TikTok user spends approximately 1.5 hours daily on the app, opening it roughly 19 times per day, which translates to about 550 hours annually that might otherwise be directed toward potentially more productive activities. This engagement pattern raises significant concerns about productivity impact.
 
@@ -30,6 +33,7 @@ Use [Perplexity Deep Research](https://www.perplexity.ai/?model_id=deep_research
 - List + Node representation (Intelligent Organization)
 - Content Discover: Tiktok suggestions for good contents
 - Sort using hashtags 
+- Competing with friends
 
 
 
