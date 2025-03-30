@@ -12,7 +12,7 @@ async def transcribe(mp3_file: str):
         The transcribed text as a string, or None if transcription fails.
     """
     # Use environment variable for API URL if available, otherwise default
-    transcribe_api_url = os.getenv("TRANSCRIPTION_API_URL", "https://ngavu2004--brainrot-mastervault-whisper-small-handle-b41132-dev.modal.run/")
+    transcribe_api_url = os.getenv("TRANSCRIPTION_API_URL", "https://ngavu2004--brainrot-mastervault-whisper-small-handle-tra-b41132.modal.run/")
 
     if not transcribe_api_url:
         print("Error: TRANSCRIPTION_API_URL environment variable not set and no default provided.")
