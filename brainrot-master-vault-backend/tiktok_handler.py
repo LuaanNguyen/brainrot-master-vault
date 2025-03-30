@@ -218,12 +218,12 @@ async def get_tiktok(tiktok_url: str):
     except Exception as e:
         print(f"An error occurred processing TikTok {video_id}: {e}")
         # Clean up potentially downloaded files in case of error
-        if os.path.exists(mp4_file_path):
+        if os.path.exists(expected_filename):
             try:
-                os.remove(mp4_file_path)
-                print(f"Cleaned up MP4 file {mp4_file_path} after error.")
+                os.remove(expected_filename)
+                print(f"Cleaned up MP4 file {expected_filename} after error.")
             except OSError as rm_err:
-                print(f"Error cleaning up MP4 file {mp4_file_path}: {rm_err}")
+                print(f"Error cleaning up MP4 file {expected_filename}: {rm_err}")
         raise HTTPException(status_code=500, detail=f"Failed to process TikTok video {video_id}: {str(e)}")
     finally:
         # Ensure temporary CSV is always removed
