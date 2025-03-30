@@ -5,11 +5,11 @@ import os
 import re
 import pyktok as pyk
 import requests
-from moviepy import VideoFileClip
+import json # Import json for parsing cached data
+from moviepy import VideoFileClip # Corrected import
 from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
-from youtube_tools.db_commands import init_db
-from youtube_tools.db_commands import get_all
+from youtube_tools.db_commands import init_db, get_all, get_cached_transcript, cache_transcript, get_cached_response, cache_response # Import cache functions
 
 # Lifespan context manager to run init_db on startup
 @asynccontextmanager
@@ -45,8 +45,38 @@ async def get_youtube(video_url: str):
     parsed_details = parse_video_details(video_details)
     if not parsed_details:
         return {"error": "Failed to parse video details"}
+
     # Download audio from the video
     download_audio(video_url, video_id)
+
+    # Determine audio file path (mirroring logic in download_audio)
+    if os.path.exists('/db/cache/'):
+        audio_dir = "/db/cache/youtube_audio/"
+    else:
+        audio_dir = "youtube_audio"
+    mp3_file_path = os.path.join(audio_dir, f"{video_id}.mp3")
+
+    # Check cache for transcript first
+    cached_transcript = get_cached_transcript(video_id)
+    if cached_transcript:
+        print(f"Cache hit for transcript: {video_id}")
+        parsed_details['transcription'] = cached_transcript
+    # If not cached, check if audio file exists, transcribe, and cache
+    elif os.path.exists(mp3_file_path):
+        print(f"Cache miss for transcript: {video_id}. Transcribing audio file: {mp3_file_path}")
+        transcribed_text = await transcribe(mp3_file_path)
+        print("Transcription completed.")
+        if transcribed_text: # Only cache if transcription was successful
+            cache_transcript(video_id, transcribed_text)
+            print(f"Cached transcript for video ID: {video_id}")
+            parsed_details['transcription'] = transcribed_text
+        else:
+            print(f"Transcription failed for {video_id}, not caching.")
+            parsed_details['transcription'] = None
+    else:
+        print(f"Audio file not found at {mp3_file_path}, skipping transcription.")
+        parsed_details['transcription'] = None # Or handle as appropriate
+
     return parsed_details
 
 def get_tiktok_username_id(tiktok_url: str) -> str:
@@ -75,10 +105,51 @@ async def get_tiktok(tiktok_url: str):
     username, video_id = get_tiktok_username_id(tiktok_url)
     if not username or not video_id:
         return {"error": "Invalid TikTok URL"}
-    
+
     print(f"Username: {username}, Video ID: {video_id}")
 
-    # Save TikTok video data to a CSV file
+    # 1. Check cache first for response data
+    cached_response_json = get_cached_response(video_id)
+    if cached_response_json:
+        print(f"Cache hit for TikTok response: {video_id}")
+        try:
+            cached_response = json.loads(cached_response_json)
+            # Check cache for transcript separately
+            cached_transcript = get_cached_transcript(video_id)
+            if cached_transcript:
+                print(f"Cache hit for TikTok transcript: {video_id}")
+                cached_response['transcription'] = cached_transcript
+                return cached_response # Return cached response + transcript
+            else:
+                # If response is cached but transcript isn't, try to get/transcribe audio
+                print(f"Cache miss for TikTok transcript: {video_id}. Attempting transcription.")
+                # Need to determine the mp3 path without downloading video again
+                if os.path.exists('/db/cache/'):
+                    output_dir = "/db/cache/tiktok_audio/"
+                else:
+                    output_dir = "tiktok_audio"
+                mp3_file = os.path.join(output_dir, f"{username}_video_{video_id}.mp3")
+
+                if os.path.exists(mp3_file):
+                    transcribed_text = await transcribe(mp3_file)
+                    if transcribed_text:
+                        cache_transcript(video_id, transcribed_text)
+                        cached_response['transcription'] = transcribed_text
+                    else:
+                        cached_response['transcription'] = None
+                else:
+                    # If audio file doesn't exist (maybe deleted?), we can't transcribe
+                    print(f"Audio file {mp3_file} not found for cached TikTok {video_id}. Cannot transcribe.")
+                    cached_response['transcription'] = None
+                return cached_response
+
+        except json.JSONDecodeError as e:
+            print(f"Error decoding cached JSON for TikTok {video_id}: {e}")
+            # Proceed to fetch from API if cache is corrupted
+
+    # 2. If not in cache or cache error, fetch from TikTok
+    print(f"Cache miss for TikTok response: {video_id}. Fetching from TikTok.")
+    # Save TikTok video data to a CSV file (downloads video)
     pyk.save_tiktok(f'https://www.tiktok.com/{username}/video/{video_id}?is_copy_url=1&is_from_webapp=v1',
 	        True,
             'video_data.csv')
@@ -104,17 +175,21 @@ async def get_tiktok(tiktok_url: str):
     print("Tiktok video downloaded successfully.")
     
     transcribed_text = await extract_audio(username, video_id)
-    print("Audio extracted successfully.")
+    print("Audio extraction and transcription attempt completed.")
 
     result = {}
+    result['title'] = data.get('video_description', 'N/A') # Use .get for safety
+    result['id'] = data.get('video_id', video_id) # Use extracted video_id if not in data
+    result['description'] = data.get('video_description', 'N/A')
+    result['publishedAt'] = data.get('video_timestamp', None)
+    result['thumbnail'] = None # TikTok API via pyktok doesn't easily provide this
+    result['channelTitle'] = data.get('author_name', username) # Use extracted username if not in data
+    result['transcription'] = transcribed_text # Add transcript
 
-    result['title'] = data['video_description']
-    result['id'] = data['video_id']
-    result['description'] = data['video_description']
-    result['publishedAt'] = data['video_timestamp']
-    result['thumbnail'] = None
-    result['channelTitle'] = data['author_name']
-    result['transcription'] = transcribed_text
+    # 3. Cache the combined result (metadata + transcript placeholder)
+    # The transcript itself is cached separately by cache_transcript if successful
+    cache_response(video_id, result, source='tiktok')
+    print(f"Cached TikTok response for video ID: {video_id} (source: tiktok)")
 
     return result if result else {"error": "Failed to extract video data"}
 
@@ -126,31 +201,76 @@ async def extract_audio(username: str, video_id: str):
 
     # Ensure output directory exists
     if os.path.exists('/db/cache/'):
-        output_dir = os.path.dirname("/db/cache/tiktok_audio")
+        output_dir = os.path.dirname("/db/cache/tiktok_audio/")
     else:
         # Fallback to the current directory if the path doesn't exist
-        output_dir = "extracted_audio" 
+        output_dir = "tiktok_audio" 
     os.makedirs(output_dir, exist_ok=True)
 
-    # Check if audio file already exists
-    if os.path.exists(os.path.join(output_dir, mp3_file)):
-        print("Audio file already exists.")
-        return
-    
-    mp3_file = os.path.join(output_dir, mp3_file)
-    # Check if the mp4 file exists before attempting to extract audio
-    if video_clip and mp3_file:
-        video_clip.audio.write_audiofile(mp3_file)
-        video_clip.close()
-        os.remove(mp4_file_url)
-        print("Video file removed successfully.")
+    mp3_file_path = os.path.join(output_dir, mp3_file)
 
-    print("Audio extracted successfully.")
+    # Check if audio file already exists
+    if os.path.exists(mp3_file_path):
+        print(f"Audio file already exists at {mp3_file_path}. Skipping extraction.")
+        # Check cache for transcript
+        cached_transcript = get_cached_transcript(video_id)
+        if cached_transcript:
+            print(f"Cache hit for transcript: {video_id}")
+            # Clean up downloaded MP4 if it exists
+            if os.path.exists(mp4_file_url):
+                 os.remove(mp4_file_url)
+                 print(f"Removed temporary video file: {mp4_file_url}")
+            return cached_transcript
+        else:
+            print(f"Audio exists but transcript not cached for {video_id}. Transcribing.")
+            # Proceed to transcribe the existing audio file
+            transcribed_text = await transcribe(mp3_file_path)
+            if transcribed_text:
+                cache_transcript(video_id, transcribed_text)
+            # Clean up downloaded MP4 if it exists
+            if os.path.exists(mp4_file_url):
+                 os.remove(mp4_file_url)
+                 print(f"Removed temporary video file: {mp4_file_url}")
+            return transcribed_text
+
+    # If audio doesn't exist, extract it
+    print(f"Extracting audio to {mp3_file_path}")
+    # Check if the mp4 file exists before attempting to extract audio
+    if video_clip and mp3_file_path:
+        try:
+            video_clip.audio.write_audiofile(mp3_file_path)
+            print("Audio extracted successfully.")
+        except Exception as e:
+            print(f"Error writing audio file: {e}")
+            return None # Indicate failure
+        finally:
+            video_clip.close() # Ensure clip is closed
+            # Remove the downloaded video file after audio extraction (or attempt)
+            if os.path.exists(mp4_file_url):
+                os.remove(mp4_file_url)
+                print(f"Removed temporary video file: {mp4_file_url}")
+    else:
+        print("MP4 video clip not available for audio extraction.")
+        if os.path.exists(mp4_file_url): # Clean up if mp4 exists but clip failed
+             os.remove(mp4_file_url)
+             print(f"Removed temporary video file: {mp4_file_url}")
+        return None # Indicate failure
+
+    # Check cache again before transcribing (maybe another request finished?)
+    cached_transcript = get_cached_transcript(video_id)
+    if cached_transcript:
+        print(f"Cache hit for transcript after audio extraction: {video_id}")
+        return cached_transcript
 
     # Call the transcribe function with the mp3 file path
     print("Transcribing audio...")
-    transcribed_text = await transcribe(mp3_file)
+    transcribed_text = await transcribe(mp3_file_path)
     print("Transcription completed.")
+
+    # Cache the transcript if successful
+    if transcribed_text:
+        cache_transcript(video_id, transcribed_text)
+        print(f"Cached transcript for video ID: {video_id}")
 
     return transcribed_text
 
@@ -165,7 +285,7 @@ async def transcribe(mp3_file: str):
     with open(mp3_file, "rb") as file:
         response = requests.post(transcribe_api_url, files={"file": file})
     
-    transcribed_text = print(response.json())
+    transcribed_text = response.json()
     return transcribed_text
         
 @app.get("/metadata")
@@ -184,23 +304,13 @@ async def get_metadata(url: str):
     
 @app.get("/home")
 async def get_home():
-    # Get all cached videos from the database and return them
+    # Get all cached videos (which now include source) from the database
     all_videos = get_all()
-    # Run all the videos through the parse_video_details function
-    # and return the parsed details
     if all_videos:
-        videos = []
-        for video in all_videos:
-            video_id = video['video_id']
-            video_details = get_youtube_video_details(video_id)
-            if not video_details:
-                return {"error": "Video not found"}
-            parsed_details = parse_video_details(video_details)
-            if not parsed_details:
-                return {"error": "Failed to parse video details"}
-            # Download audio from the video
-            download_audio(video['video_id'], video_id)
-            videos.append(parsed_details)
-        return {"videos": videos}
+        # No need to re-fetch or re-parse, just return the cached data
+        # The 'response_data' field already contains the parsed details
+        # The 'transcript' field contains the cached transcript
+        # The 'source' field indicates 'youtube' or 'tiktok'
+        return {"videos": all_videos}
     else:
-        return {"error": "No cached videos found"}
+        return {"videos": []}
