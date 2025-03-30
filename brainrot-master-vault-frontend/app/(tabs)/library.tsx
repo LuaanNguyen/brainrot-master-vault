@@ -8,18 +8,86 @@ import {
   Image,
   ActivityIndicator,
   Linking,
+  ScrollView,
 } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import { Plus } from "lucide-react-native";
 import { useState, useEffect } from "react";
-import { useRefresh } from "../../context/RefreshContext"; // Add this import
+import { useRefresh } from "../../context/RefreshContext";
 
 const LibraryScreen = () => {
   const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState("categories"); // 'categories' or 'recent'
-  const [recentVideos, setRecentVideos] = useState([]);
+  const [activeTab, setActiveTab] = useState("categories");
+  const [allRecentVideos, setAllRecentVideos] = useState([]); // All videos from API
+  const [visibleRecentVideos, setVisibleRecentVideos] = useState([]); // Currently visible videos
   const [loading, setLoading] = useState(false);
-  const { refreshTrigger } = useRefresh(); // Add this line to use the refresh context
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
+  const ITEMS_PER_PAGE = 10;
+  const { refreshTrigger } = useRefresh();
+
+  // Fetch recent videos from API
+  useEffect(() => {
+    if (activeTab === "recent") {
+      setLoading(true);
+      setPage(1); // Reset page when tab changes
+      setHasReachedEnd(false);
+
+      fetch("https://brainrotapi.codestacx.com/home")
+        .then((response) => response.json())
+        .then((data) => {
+          const videos = data.videos || [];
+          setAllRecentVideos(videos);
+          // Initially show only the first 5 items
+          setVisibleRecentVideos(videos.slice(0, ITEMS_PER_PAGE));
+          setHasReachedEnd(videos.length <= ITEMS_PER_PAGE);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching recent videos:", error);
+          setLoading(false);
+        });
+    }
+  }, [activeTab, refreshTrigger]);
+
+  // Function to load more items
+  const loadMoreItems = () => {
+    if (loadingMore || hasReachedEnd || activeTab !== "recent") {
+      return;
+    }
+
+    setLoadingMore(true);
+
+    // Calculate the next set of items to display
+    const nextPage = page + 1;
+    const startIndex = visibleRecentVideos.length;
+    const endIndex = nextPage * ITEMS_PER_PAGE;
+
+    // Add the next batch of items to the visible items
+    setTimeout(() => {
+      const newItems = allRecentVideos.slice(startIndex, endIndex);
+
+      if (newItems.length > 0) {
+        setVisibleRecentVideos([...visibleRecentVideos, ...newItems]);
+        setPage(nextPage);
+      }
+
+      // Check if we've reached the end
+      if (startIndex + newItems.length >= allRecentVideos.length) {
+        setHasReachedEnd(true);
+      }
+
+      setLoadingMore(false);
+    }, 500); // Small delay to show loading indicator
+  };
+
+  // Handle scroll event for FlatList
+  const handleOnEndReached = () => {
+    if (!loading && !loadingMore && activeTab === "recent") {
+      loadMoreItems();
+    }
+  };
 
   // Mock data for categories with added image URLs
   const categories = [
@@ -80,23 +148,6 @@ const LibraryScreen = () => {
         "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80",
     },
   ];
-
-  // Fetch recent videos from API
-  useEffect(() => {
-    if (activeTab === "recent") {
-      setLoading(true);
-      fetch("https://brainrotapi.codestacx.com/home")
-        .then((response) => response.json())
-        .then((data) => {
-          setRecentVideos(data.videos);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching recent videos:", error);
-          setLoading(false);
-        });
-    }
-  }, [activeTab, refreshTrigger]); // Add refreshTrigger to dependency array
 
   const renderCategoryItem = ({ item }) => (
     <TouchableOpacity
@@ -251,6 +302,37 @@ const LibraryScreen = () => {
     );
   };
 
+  // Footer component for loading indicator
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={colors.primary} />
+        <Text style={[styles.loadingMoreText, { color: colors.text }]}>
+          Loading more...
+        </Text>
+      </View>
+    );
+  };
+
+  const renderEndOfList = () => {
+    if (
+      !hasReachedEnd ||
+      activeTab !== "recent" ||
+      allRecentVideos.length === 0
+    )
+      return null;
+
+    return (
+      <View style={styles.endOfListContainer}>
+        <Text style={[styles.endOfListText, { color: colors.text }]}>
+          You've reached the end of the list
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
@@ -311,12 +393,24 @@ const LibraryScreen = () => {
         </View>
       ) : (
         <FlatList
-          data={activeTab === "categories" ? categories : recentVideos}
+          data={activeTab === "categories" ? categories : visibleRecentVideos}
           renderItem={
             activeTab === "categories" ? renderCategoryItem : renderVideoItem
           }
-          keyExtractor={(item) => item.id || item._id || String(Math.random())}
+          keyExtractor={(item) =>
+            item.id || item._id || item.video_id || String(Math.random())
+          }
           contentContainerStyle={styles.list}
+          ListFooterComponent={
+            activeTab === "recent" ? (
+              <>
+                {renderFooter()}
+                {renderEndOfList()}
+              </>
+            ) : null
+          }
+          onEndReached={activeTab === "recent" ? handleOnEndReached : null}
+          onEndReachedThreshold={0.3}
         />
       )}
     </View>
@@ -456,6 +550,28 @@ const styles = StyleSheet.create({
     color: "#999999",
     fontSize: 12,
     fontWeight: "400",
+  },
+
+  // Footer loader styles
+  footerLoader: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+  },
+  loadingMoreText: {
+    marginLeft: 8,
+    fontSize: 12,
+  },
+
+  // End of list styles
+  endOfListContainer: {
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  endOfListText: {
+    fontSize: 12,
+    opacity: 0.7,
   },
 });
 

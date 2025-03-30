@@ -7,10 +7,17 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "lucide-react-native";
 import { useRefresh } from "../../context/RefreshContext";
+
+// YouTube and TikTok logo URLs for fallback thumbnails
+const YOUTUBE_LOGO_URL =
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/2560px-YouTube_full-color_icon_%282017%29.svg.png";
+const TIKTOK_LOGO_URL =
+  "https://static.vecteezy.com/system/resources/previews/018/930/572/original/tiktok-logo-tiktok-icon-transparent-free-png.png";
 
 export default function AddVideoScreen() {
   const [videoUrl, setVideoUrl] = useState("");
@@ -39,6 +46,47 @@ export default function AddVideoScreen() {
     return url.includes("tiktok.com");
   };
 
+  const getThumbnailUrl = (item) => {
+    // Check if item has standard thumbnail
+    if (
+      item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.thumbnails &&
+      item.response_data.items[0].snippet.thumbnails.medium
+    ) {
+      return item.response_data.items[0].snippet.thumbnails.medium.url;
+    }
+
+    // Check for other thumbnail locations
+    if (
+      item.thumbnails ||
+      (item.response_data && item.response_data.thumbnail)
+    ) {
+      return item.thumbnails || item.response_data.thumbnail;
+    }
+
+    // If source is YouTube, use YouTube logo as fallback
+    if (
+      item.source === "youtube" ||
+      (item.video_url && isYouTubeUrl(item.video_url))
+    ) {
+      return YOUTUBE_LOGO_URL;
+    }
+
+    // If source is TikTok, use TikTok logo as fallback
+    if (
+      item.source === "tiktok" ||
+      (item.video_url && isTikTokUrl(item.video_url))
+    ) {
+      return TIKTOK_LOGO_URL;
+    }
+
+    // Default fallback (should never reach here if source is properly set)
+    return "https://via.placeholder.com/120x90?text=No+Thumbnail";
+  };
+
   const handleAddVideo = async () => {
     if (!videoUrl) return;
 
@@ -47,14 +95,23 @@ export default function AddVideoScreen() {
 
     try {
       let apiUrl;
+      let processedUrl = videoUrl;
+      let source = "";
+
+      // Process URLs - remove query parameters for both YouTube and TikTok
+      if (videoUrl.includes("?")) {
+        processedUrl = videoUrl.split("?")[0];
+      }
 
       if (isYouTubeUrl(videoUrl)) {
+        source = "youtube";
         apiUrl = `https://brainrotapi.codestacx.com/youtube?video_url=${encodeURIComponent(
-          videoUrl
+          processedUrl
         )}`;
       } else if (isTikTokUrl(videoUrl)) {
+        source = "tiktok";
         apiUrl = `https://brainrotapi.codestacx.com/tiktok?tiktok_url=${encodeURIComponent(
-          videoUrl
+          processedUrl
         )}`;
       } else {
         Alert.alert(
@@ -72,8 +129,7 @@ export default function AddVideoScreen() {
         setSuccessMessage("Video successfully added to your library!");
         setVideoUrl("");
 
-        // Trigger refresh for other components - this will cause
-        // VideoContext to re-fetch data and update all subscribed components
+        // Trigger refresh for other components
         triggerRefresh();
       } else {
         Alert.alert("Error", data.message || "Failed to process video");

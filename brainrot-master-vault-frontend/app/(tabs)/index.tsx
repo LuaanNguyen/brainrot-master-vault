@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,9 +10,10 @@ import {
   StatusBar,
   FlatList,
   Linking,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
-import { useRefresh } from "../../context/RefreshContext"; // Add this import
+import { useRefresh } from "../../context/RefreshContext";
 
 // Filter component
 const FilterTabs = ({ activeTab, setActiveTab }) => {
@@ -43,7 +44,6 @@ const FilterTabs = ({ activeTab, setActiveTab }) => {
   );
 };
 
-// Music Item Component
 // Music Item Component
 const MusicItem = ({ item }) => {
   const handlePress = () => {
@@ -212,21 +212,73 @@ const RecentlyAddedItem = ({ item }) => {
 // Main App
 const Home = () => {
   const [activeTab, setActiveTab] = useState("All");
-  const [recentlyAddItems, setRecentItems] = useState([]);
-  const { refreshTrigger } = useRefresh(); // Add this line to use the refresh context
+  const [allRecentItems, setAllRecentItems] = useState([]); // All items from the API
+  const [visibleRecentItems, setVisibleRecentItems] = useState([]); // Currently visible items
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+  const { refreshTrigger } = useRefresh();
 
   // Fetch videos when component mounts or refreshTrigger changes
   useEffect(() => {
+    setLoading(true);
     fetch("https://brainrotapi.codestacx.com/home")
       .then((response) => response.json())
       .then((data) => {
-        console.log(data.videos);
-        setRecentItems(data.videos);
+        const videos = data.videos || [];
+        setAllRecentItems(videos);
+        // Initially show only the first 5 items
+        setVisibleRecentItems(videos.slice(0, ITEMS_PER_PAGE));
+        setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching recent videos:", error);
+        setLoading(false);
       });
   }, [refreshTrigger]);
+
+  // Function to load more items
+  const loadMoreItems = () => {
+    if (loading || visibleRecentItems.length >= allRecentItems.length) {
+      return;
+    }
+
+    setLoading(true);
+
+    // Calculate the next set of items to display
+    const nextPage = page + 1;
+    const endIndex = nextPage * ITEMS_PER_PAGE;
+
+    // Add the next batch of items to the visible items
+    setTimeout(() => {
+      setVisibleRecentItems([
+        ...visibleRecentItems,
+        ...allRecentItems.slice(visibleRecentItems.length, endIndex),
+      ]);
+      setPage(nextPage);
+      setLoading(false);
+    }, 500); // Small delay to show loading indicator
+  };
+
+  // Function to check if the user has scrolled to the bottom
+  const isCloseToBottom = ({
+    layoutMeasurement,
+    contentOffset,
+    contentSize,
+  }) => {
+    const paddingToBottom = 20; // How close to the bottom
+    return (
+      layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - paddingToBottom
+    );
+  };
+
+  // Handle scroll event
+  const handleScroll = ({ nativeEvent }) => {
+    if (isCloseToBottom(nativeEvent)) {
+      loadMoreItems();
+    }
+  };
 
   // Mock data
   const categories = [
@@ -301,7 +353,10 @@ const Home = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <ScrollView>
+      <ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={400} // Adjust throttle as needed
+      >
         {/* Filter tabs */}
         <FilterTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -334,22 +389,39 @@ const Home = () => {
         {/* Recently Added section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recently Added</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={loadMoreItems}>
             <Text style={styles.sectionLink}>See more</Text>
           </TouchableOpacity>
         </View>
 
         {/* Recently Added items - vertical list */}
         <View style={styles.recentlyAddedList}>
-          {recentlyAddItems && recentlyAddItems.length > 0 ? (
-            recentlyAddItems.map((item) => (
-              <RecentlyAddedItem key={item.id} item={item} />
+          {visibleRecentItems && visibleRecentItems.length > 0 ? (
+            visibleRecentItems.map((item) => (
+              <RecentlyAddedItem key={item.id || item.video_id} item={item} />
             ))
           ) : (
             <Text style={styles.recentlyAddedSubtitle}>
               No recent items available
             </Text>
           )}
+
+          {/* Loading indicator at the bottom */}
+          {loading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#4A8FE7" />
+              <Text style={styles.loadingText}>Loading more...</Text>
+            </View>
+          )}
+
+          {/* End of list message */}
+          {!loading &&
+            visibleRecentItems.length >= allRecentItems.length &&
+            allRecentItems.length > 0 && (
+              <Text style={styles.endOfListText}>
+                You've reached the end of the list
+              </Text>
+            )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -491,6 +563,20 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  sourceBadge: {
+    position: "absolute",
+    left: 4,
+    top: 4,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  sourceText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "500",
+  },
   durationBadge: {
     position: "absolute",
     right: 4,
@@ -520,6 +606,24 @@ const styles = StyleSheet.create({
     color: "#999999",
     fontSize: 12,
     fontWeight: "400",
+  },
+  // New styles for loading and end of list
+  loadingContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  loadingText: {
+    color: "#999999",
+    fontSize: 12,
+    marginLeft: 8,
+  },
+  endOfListText: {
+    color: "#999999",
+    fontSize: 12,
+    textAlign: "center",
+    padding: 16,
   },
 });
 
