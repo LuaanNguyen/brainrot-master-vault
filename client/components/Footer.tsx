@@ -9,12 +9,15 @@ import {
   Twitter,
   Linkedin,
   Instagram,
-  Youtube,
+  Github,
   Mail,
   MapPin,
   Phone,
   ArrowRight,
   Heart,
+  BookOpen,
+  Award,
+  Rocket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +39,34 @@ export default function Footer() {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 },
   };
+
+  // Team members data
+  const teamMembers = [
+    {
+      id: 1,
+      name: "Jane Vu",
+      email: "thiquynh@asu.edu",
+      linkedin: "https://www.linkedin.com/in/nga-vu-269626226/",
+    },
+    {
+      id: 2,
+      name: "Andy Le",
+      email: "4ndyle@gmail.com",
+      linkedin: "www.linkedin.com/in/4ndyle",
+    },
+    {
+      id: 3,
+      name: "Smit Devrukhkar",
+      email: "smitdev3@gmail.com",
+      linkedin: "https://www.linkedin.com/in/smitsd/",
+    },
+    {
+      id: 4,
+      name: "Luan Nguyen",
+      email: "luanthiennguyen2003@gmail.com",
+      linkedin: "https://www.linkedin.com/in/luanthiennguyen/",
+    },
+  ];
 
   return (
     <footer className="w-full border-t bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
@@ -113,151 +144,116 @@ export default function Footer() {
 
             <div className="flex items-center space-x-4">
               <motion.a
-                href="#"
+                href="/"
                 className="size-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <Facebook size={18} />
+                <Github size={18} />
               </motion.a>
               <motion.a
-                href="#"
+                href="/"
                 className="size-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <Twitter size={18} />
+                <Award size={18} />
               </motion.a>
               <motion.a
-                href="#"
+                href="/"
                 className="size-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <Linkedin size={18} />
-              </motion.a>
-              <motion.a
-                href="#"
-                className="size-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Instagram size={18} />
+                <Rocket size={18} />
               </motion.a>
             </div>
           </motion.div>
 
-          {/* Navigation columns */}
+          {/* Project Info */}
           <motion.div variants={item} className="md:col-span-2">
             <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-5">
-              Resources
+              Project
             </h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link
-                  href="#"
+                  href="https://github.com/LuaanNguyen/brainrot-master-vault"
                   className="text-gray-600 hover:text-blue-600 transition-colors inline-flex items-center"
                 >
-                  <ArrowRight className="mr-2 h-3 w-3 opacity-0 group-hover:opacity-100" />
-                  Getting Started
+                  <Github className="mr-2 h-4 w-4" />
+                  Repository
                 </Link>
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/"
                   className="text-gray-600 hover:text-blue-600 transition-colors inline-flex items-center"
                 >
-                  Documentation
+                  <Award className="mr-2 h-4 w-4" />
+                  Devpost
                 </Link>
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="https://www.brainrotmastervaultovercooked.tech/"
                   className="text-gray-600 hover:text-blue-600 transition-colors inline-flex items-center"
                 >
-                  API Reference
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors inline-flex items-center"
-                >
-                  Help Center
+                  <Rocket className="mr-2 h-4 w-4" />
+                  Demo
                 </Link>
               </li>
             </ul>
           </motion.div>
 
+          {/* Hackathon Info */}
           <motion.div variants={item} className="md:col-span-2">
             <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-5">
-              Company
+              HackPrinceton
             </h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link
-                  href="#"
+                  href="https://www.hackprinceton.com/"
                   className="text-gray-600 hover:text-blue-600 transition-colors inline-flex items-center"
                 >
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors inline-flex items-center"
-                >
-                  Careers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors inline-flex items-center"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors inline-flex items-center"
-                >
-                  Terms of Service
+                  About Hackathon
                 </Link>
               </li>
             </ul>
           </motion.div>
 
+          {/* Team Members */}
           <motion.div variants={item} className="md:col-span-2">
             <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-5">
-              Contact
+              Team
             </h4>
             <ul className="space-y-4 text-sm">
-              <li>
-                <div className="flex items-start">
-                  <Mail className="mr-3 h-4 w-4 text-blue-600 mt-0.5" />
-                  <span className="text-gray-600">
-                    support@brainrotvault.com
-                  </span>
-                </div>
-              </li>
-              <li>
-                <div className="flex items-start">
-                  <Phone className="mr-3 h-4 w-4 text-blue-600 mt-0.5" />
-                  <span className="text-gray-600">+1 (555) 123-4567</span>
-                </div>
-              </li>
-              <li>
-                <div className="flex items-start">
-                  <MapPin className="mr-3 h-4 w-4 text-blue-600 mt-0.5" />
-                  <span className="text-gray-600">
-                    Princeton University
-                    <br />
-                    Princeton, NJ 08544
-                  </span>
-                </div>
-              </li>
+              {teamMembers.map((member) => (
+                <li key={member.id}>
+                  <div className="flex items-start">
+                    <span className="text-gray-800 font-medium">
+                      {member.name}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 mt-1">
+                    <a
+                      href={`mailto:${member.email}`}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <Mail className="h-4 w-4" />
+                    </a>
+                    <a
+                      href={member.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <Linkedin className="h-4 w-4" />
+                    </a>
+                  </div>
+                </li>
+              ))}
             </ul>
           </motion.div>
         </motion.div>
@@ -271,30 +267,22 @@ export default function Footer() {
             </p>
 
             <div className="flex items-center gap-6">
-              <Link
-                href="#"
+              <a
+                href="https://github.com/yourusername/brainrot-master-vault"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
               >
-                Privacy
-              </Link>
-              <Link
-                href="#"
+                GitHub
+              </a>
+              <a
+                href="https://devpost.com/software/brainrot-master-vault"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
               >
-                Terms
-              </Link>
-              <Link
-                href="#"
-                className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
-              >
-                Cookies
-              </Link>
-              <Link
-                href="#"
-                className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
-              >
-                Sitemap
-              </Link>
+                Devpost
+              </a>
             </div>
           </div>
         </div>
