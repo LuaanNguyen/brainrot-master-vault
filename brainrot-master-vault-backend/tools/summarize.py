@@ -23,7 +23,7 @@ def summarize_text(text):
             model="gemini-2.0-flash",
             contents="Provide a concise summary of the following text in 100 words or less. Focus on the key points and main ideas:\n\n" + text,
         )
-        return response
+        return response.text
     except Exception as e:
         print(f"Error generating summary: {e}")
         return None

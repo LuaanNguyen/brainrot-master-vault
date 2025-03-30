@@ -9,7 +9,7 @@ import json # Import json for parsing cached data
 from moviepy import VideoFileClip # Corrected import
 from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
-from youtube_tools.db_commands import init_db, get_all, get_cached_transcript, cache_transcript, get_cached_response, cache_response # Import cache functions
+from youtube_tools.db_commands import init_db, get_all, get_cached_transcript, cache_transcript, get_cached_response, cache_response, get_cached_summary, cache_summary 
 from tools.summarize import summarize_text
 
 # Lifespan context manager to run init_db on startup
@@ -79,12 +79,21 @@ async def get_youtube(video_url: str):
         parsed_details['transcription'] = None # Or handle as appropriate
     # Summarize the video using the Title, Description, and Transcript
     if parsed_details['transcription']:
-        summary = summarize_text('Title:' + parsed_details['title'] + 
-                                 'Transcript:' + parsed_details['transcription'] +
-                                 'Description:' + parsed_details['description'])
-        parsed_details['summary'] = summary
-    else:
-        parsed_details['summary'] = None
+        # Check cache for summary first
+        cached_summary = get_cached_summary(video_id)
+        if cached_summary:
+            print(f"Cache hit for summary: {video_id}")
+            parsed_details['summary'] = cached_summary
+        else:
+            print(f"Cache miss for summary: {video_id}. Generating new summary.")
+            # Generate summary using the summarize_text function
+            summary = summarize_text('Title:' + parsed_details['title'] + 
+                                     'Transcript:' + parsed_details['transcription'] +
+                                     'Description:' + parsed_details['description'])
+            # Cache the summary
+            cache_summary(video_id, summary)
+            print(f"Cached summary for video ID: {video_id}")
+            parsed_details['summary'] = summary
 
     return parsed_details
 
