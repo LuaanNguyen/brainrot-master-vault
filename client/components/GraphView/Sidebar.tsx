@@ -75,7 +75,7 @@ export default function Sidebar({ toggleFullscreen }: SidebarProps) {
       <div className="flex items-center justify-center py-6 px-3">
         <div className="flex items-center w-full">
           <div className="size-10 rounded-xl bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-blue-200 flex-shrink-0">
-            <Grid3X3 className="size-5" />
+            <ChartNetwork className="size-5" />
           </div>
           <span className="ml-3 font-bold text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate">
             BrainRot Vault
