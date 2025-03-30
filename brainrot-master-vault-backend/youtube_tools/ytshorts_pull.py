@@ -51,9 +51,9 @@ def get_youtube_video_details(video_id: str):
         
         video_data = response.json()
         
-        # 3. Cache the new response
-        cache_response(video_id, video_data)
-        print(f"Cached API response for video ID: {video_id}")
+        # 3. Cache the new response with source
+        cache_response(video_id, video_data, source='youtube') # Add source='youtube'
+        print(f"Cached API response for video ID: {video_id} (source: youtube)")
         
         return video_data
 

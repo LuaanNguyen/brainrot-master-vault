@@ -34,6 +34,17 @@ def init_db():
             # else:
             #     print("'transcript' column already exists.") # Optional: uncomment for verbose logging
 
+        # Add source column if it doesn't exist
+        try:
+            cursor.execute("ALTER TABLE cache ADD COLUMN source TEXT")
+            print("Added 'source' column to cache table.")
+        except sqlite3.OperationalError as e:
+            # Ignore error if column already exists
+            if "duplicate column name" not in str(e):
+                raise e
+            # else:
+            #     print("'source' column already exists.") # Optional: uncomment for verbose logging
+
         conn.commit()
         print(f"Database initialized successfully at {DB_PATH}")
     except sqlite3.Error as e:
@@ -62,19 +73,28 @@ def get_cached_response(video_id: str):
         if conn:
             conn.close()
 
-def cache_response(video_id: str, response_data: dict):
-    """Stores an API response in the cache."""
+def cache_response(video_id: str, response_data: dict, source: str):
+    """Stores an API response in the cache, including its source ('youtube' or 'tiktok')."""
     conn = None
+    if source not in ['youtube', 'tiktok']:
+        print(f"Error: Invalid source '{source}' provided for video_id {video_id}. Source must be 'youtube' or 'tiktok'.")
+        return # Or raise an error
+
     try:
         # Convert the dictionary response to a JSON string for storage
         response_json = json.dumps(response_data)
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        # Use INSERT OR REPLACE to handle potential existing entries (or update timestamp)
+        # Use INSERT OR REPLACE to handle potential existing entries
+        # This will insert a new row or replace an existing one based on video_id.
+        # If replacing, it updates response_data and source. Timestamp updates automatically.
+        # If the row exists but only had a transcript before, this adds response_data and source.
         cursor.execute('''
-            INSERT OR REPLACE INTO cache (video_id, response_data)
-            VALUES (?, ?)
-        ''', (video_id, response_json))
+            INSERT OR REPLACE INTO cache (video_id, response_data, source, timestamp, transcript)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP, (SELECT transcript FROM cache WHERE video_id = ?))
+        ''', (video_id, response_json, source, video_id))
+        # Note: The subquery `(SELECT transcript FROM cache WHERE video_id = ?)` preserves the existing transcript if the row is replaced.
+        # If it's a new insert, the subquery returns NULL, which is the desired default for transcript.
         conn.commit()
     except sqlite3.Error as e:
         print(f"Database error caching response for {video_id}: {e}")
@@ -133,24 +153,24 @@ def get_cached_transcript(video_id: str):
 
 
 def get_all(user: str = None):
-    """Fetches all cached videos (including transcripts) from the database."""
+    """Fetches all cached videos (including transcripts and source) from the database."""
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        # Fetch video_id, response_data, and transcript
-        cursor.execute("SELECT video_id, response_data, transcript FROM cache")
+        # Fetch video_id, response_data, transcript, and source
+        cursor.execute("SELECT video_id, response_data, transcript, source FROM cache")
         results = cursor.fetchall()
         # Convert results to a list of dictionaries
-        # Handle cases where response_data might be None if only transcript was cached initially
         all_data = []
         for row in results:
-            video_id, response_data_json, transcript = row
+            video_id, response_data_json, transcript, source = row
             response_data = json.loads(response_data_json) if response_data_json else None
             all_data.append({
                 "video_id": video_id,
                 "response_data": response_data,
-                "transcript": transcript
+                "transcript": transcript,
+                "source": source # Include the source
             })
         return all_data
     except sqlite3.Error as e:
