@@ -14,8 +14,10 @@ import { useTheme } from "@/context/ThemeContext";
 import { Plus } from "lucide-react-native";
 import { useState, useEffect } from "react";
 import { useRefresh } from "../../context/RefreshContext";
+import { useRouter } from "expo-router";
 
 const LibraryScreen = () => {
+  const router = useRouter();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState("categories");
   const [allRecentVideos, setAllRecentVideos] = useState([]); // All videos from API
@@ -152,6 +154,16 @@ const LibraryScreen = () => {
   const renderCategoryItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.categoryItem, { borderBottomColor: colors.border }]}
+      onPress={() => {
+        router.push({
+          pathname: "/PlaylistDetail",
+          params: {
+            id: item.id,
+            title: item.title,
+            imageUrl: encodeURIComponent(item.imageUrl),
+          },
+        });
+      }}
     >
       <Image
         source={{ uri: item.imageUrl }}

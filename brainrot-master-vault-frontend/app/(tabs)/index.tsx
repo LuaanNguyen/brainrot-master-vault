@@ -47,19 +47,22 @@ const FilterTabs = ({ activeTab, setActiveTab }) => {
 // Music Item Component
 const MusicItem = ({ item }) => {
   const handlePress = () => {
-    // Navigate to a detail page with the item ID
     router.push({
       pathname: "/PlaylistDetail",
-      params: { id: item.id, title: item.title },
+      params: {
+        id: item.id,
+        title: item.title || item.description,
+        imageUrl: encodeURIComponent(item.imageUrl),
+      },
     });
   };
 
   return (
     <TouchableOpacity style={styles.musicItem} onPress={handlePress}>
       <Image source={{ uri: item.imageUrl }} style={styles.musicCover} />
-      <View style={styles.musicInfo}>
-        <Text style={styles.musicTitle}>{item.title}</Text>
-      </View>
+      <Text style={styles.musicTitle} numberOfLines={2}>
+        {item.description || item.title}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -299,7 +302,7 @@ const Home = () => {
       id: "3",
       title: "Health & Fitness Tips",
       imageUrl:
-        "https://images.unsplash.com/photo-1571019614242-c5c5dee9f707?w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop",
       showPlayButton: false,
     },
     {
@@ -321,7 +324,6 @@ const Home = () => {
       title: "Science & Space Discoveries",
       imageUrl:
         "https://images.unsplash.com/photo-1447433865958-f402f562b843?w=800&auto=format&fit=crop",
-      showPlayButton: false,
     },
   ];
 
@@ -467,11 +469,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     padding: 12,
+    justifyContent: "space-between", // Better spacing between cards
   },
   musicItem: {
-    width: "33.33%", // 3 cards per row
-    paddingHorizontal: 4,
-    marginBottom: 12,
+    width: "31%", // Slightly narrower than 33.33% to allow for more spacing
+    marginBottom: 16, // Increased bottom margin for better separation
+    backgroundColor: "rgba(100, 100, 100, 0.3)", // Subtle background for better text visibility
+    borderRadius: 8,
   },
   musicCover: {
     width: "100%",
@@ -482,10 +486,13 @@ const styles = StyleSheet.create({
     marginTop: 4, // Smaller gap between image and text
   },
   musicTitle: {
-    color: "#E6E6E6",
-    fontSize: 12, // Smaller font size
-    fontWeight: "500",
+    color: "#FFFFFF", // Brighter white for better contrast
+    fontSize: 10, // Smaller font size
+    fontWeight: "600", // Slightly bolder
     textAlign: "center", // Center text
+    margin: 6,
+    paddingHorizontal: 4, // Add some horizontal padding
+    lineHeight: 14, // Tighter line height for better readability
   },
   sectionHeader: {
     flexDirection: "row",
@@ -538,8 +545,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   dailyMixArtists: {
-    color: "#999999",
-    fontSize: 10, // Smaller
+    color: "#FFFFFF", // Changed from #999999 to white
+    fontSize: 10, // Kept the same size
     marginTop: 6,
   },
   // Recently Added styles

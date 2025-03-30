@@ -8,9 +8,14 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
+  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { useEffect } from "react";
+
+// Get screen width for responsive sizing
+const { width } = Dimensions.get("window");
+const coverSize = width - 32; // Full width minus padding
 
 // Format date helper function
 const formatDate = (dateString) => {
@@ -90,7 +95,7 @@ const RecentlyAddedItem = ({ item }) => {
       return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
     }
 
-    return "https://via.placeholder.com/120x70";
+    return "https://cdn.shopify.com/s/files/1/0070/7032/files/tiktok2_5381bbf7-d33d-4c31-9cbd-6dad2ef3b2ce.png?v=1734596856";
   };
 
   // Handle video URL generation
@@ -136,7 +141,7 @@ const RecentlyAddedItem = ({ item }) => {
 };
 
 export default function PlaylistDetail() {
-  const { id, title } = useLocalSearchParams();
+  const { id, title, imageUrl } = useLocalSearchParams();
   const [videos, setVideos] = useState([]);
 
   useEffect(() => {
@@ -170,6 +175,16 @@ export default function PlaylistDetail() {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
+
+          {/* Album Cover Image */}
+          {imageUrl && (
+            <Image
+              source={{ uri: decodeURIComponent(imageUrl) }}
+              style={styles.coverImage}
+              resizeMode="cover"
+            />
+          )}
+
           <Text style={styles.title}>{title}</Text>
 
           {/* Playlist Summary */}
@@ -341,5 +356,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
     marginBottom: 16,
+  },
+  coverImage: {
+    width: coverSize,
+    height: coverSize * 0.6, // Aspect ratio 5:3
+    borderRadius: 12,
+    marginBottom: 16,
+    alignSelf: "center",
   },
 });
