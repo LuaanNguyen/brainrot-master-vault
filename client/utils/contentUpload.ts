@@ -66,23 +66,19 @@ export const fetchVideoContent = async (url: string): Promise<any> => {
         // Use a raw unencoded URL in video_url parameter without encoding
         const apiUrl = `https://brainrotapi.codestacx.com/${platform}?video_url=${url}`;
 
-        // Use CORS proxy for development
-        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(
-          apiUrl
-        )}`;
-
-        console.log(`Attempting API fetch from: ${corsProxyUrl}`);
+        console.log(`Attempting API fetch from: ${apiUrl}`);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-        const response = await fetch(corsProxyUrl, {
+        const response = await fetch(apiUrl, {
           signal: controller.signal,
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
           method: "GET",
+          mode: "cors",
         });
         clearTimeout(timeoutId);
 
@@ -107,23 +103,19 @@ export const fetchVideoContent = async (url: string): Promise<any> => {
         // Construct API URL based on platform - exact same format as YouTube
         const apiUrl = `https://brainrotapi.codestacx.com/${platform}?video_url=${url}`;
 
-        // Use CORS proxy for development
-        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(
-          apiUrl
-        )}`;
-
-        console.log(`Fetching from: ${corsProxyUrl}`);
+        console.log(`Fetching from: ${apiUrl}`);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-        const response = await fetch(corsProxyUrl, {
+        const response = await fetch(apiUrl, {
           signal: controller.signal,
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
           method: "GET",
+          mode: "cors",
         });
         clearTimeout(timeoutId);
 

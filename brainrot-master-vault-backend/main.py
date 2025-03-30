@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 import os
 from contextlib import asynccontextmanager # For lifespan management
+from fastapi.middleware.cors import CORSMiddleware
 
 # Import database functions and initialization
 from youtube_tools.db_commands import init_db, get_all
@@ -23,7 +24,16 @@ async def lifespan(app: FastAPI):
     # Add cleanup logic here if needed in the future
     print("Application shutting down.")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="BrainRot API", description="API for BrainRot Master Vault")
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Add your frontend URL here
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Include the routers from the handler files
 app.include_router(youtube_router)
@@ -31,7 +41,7 @@ app.include_router(tiktok_router)
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Welcome to BrainRot API. Use /youtube or /tiktok endpoints."}
 
 @app.get("/metadata", tags=["metadata"])
 async def get_metadata(url: str):

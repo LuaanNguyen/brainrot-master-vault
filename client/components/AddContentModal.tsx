@@ -55,7 +55,7 @@ export default function AddContentModal({
         setContentPreview(null);
         setSuccess(null);
         onClose();
-      }, 2000);
+      }, 10000);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
