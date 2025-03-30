@@ -37,60 +37,53 @@ async def extract_audio_and_transcribe(username: str, video_id: str, mp_file_url
     Extracts audio from the downloaded MP4, transcribes it, and handles caching.
     Cleans up the MP4 file afterwards.
     """
-    mp3_file_base = f"{username}_video_{video_id}.mp3"
-
     # Determine output directory
-    if os.path.exists('/db/cache/'):
-        output_dir = "/db/cache/tiktok_audio/"
-    else:
-        output_dir = "tiktok_audio"
+    base_dir = "/db/cache" if os.path.exists('/db/cache/') else "."
+    output_dir = os.path.join(base_dir, "tiktok_audio")
     os.makedirs(output_dir, exist_ok=True)
-    mp3_file_path = os.path.join(output_dir, mp3_file_base)
 
+    # Define MP3 output path
+    mp3_file_path = os.path.join(output_dir, f"{username}_video_{video_id}.mp3")
     transcribed_text = None
 
     # Check cache for transcript first
     cached_transcript = get_cached_transcript(video_id)
     if cached_transcript:
         print(f"Cache hit for transcript: {video_id}")
-        transcribed_text = cached_transcript
-    # Check if audio file already exists (maybe from a previous failed run)
-    elif os.path.exists(mp3_file_path):
-        print(f"Audio file already exists at {mp3_file_path}. Transcribing.")
+        return cached_transcript
+
+    # Check if audio file exists and transcribe
+    if os.path.exists(mp3_file_path):
+        print(f"Using existing audio file: {mp3_file_path}")
         transcribed_text = await transcribe(mp3_file_path)
-        if transcribed_text:
-            cache_transcript(video_id, transcribed_text)
-    # If neither transcript nor audio exists, extract audio and transcribe
+    # Extract audio from video if mp4 exists
     elif os.path.exists(mp_file_url):
         print(f"Extracting audio from {mp_file_url} to {mp3_file_path}")
         try:
             with VideoFileClip(mp_file_url) as video_clip:
-                video_clip.audio.write_audiofile(mp3_file_path, codec='mp3') # Specify codec
-            print("Audio extracted successfully.")
-
-            # Transcribe the newly extracted audio
-            print("Transcribing audio...")
+                video_clip.audio.write_audiofile(mp3_file_path, codec='mp3')
+            print("Audio extracted successfully")
+            
+            # Transcribe the new audio
             transcribed_text = await transcribe(mp3_file_path)
-            if transcribed_text:
-                cache_transcript(video_id, transcribed_text)
-                print(f"Cached transcript for video ID: {video_id}")
-            else:
-                print(f"Transcription failed for {video_id} after audio extraction.")
-
         except Exception as e:
             print(f"Error during audio extraction or transcription: {e}")
-            # Don't delete mp4 yet if transcription failed, maybe retry later?
-            # Or decide based on error type
+            raise
+        finally:
+            # Always try to delete the source video file
+            try:
+                os.remove(mp_file_url)
+                print(f"Removed source video file: {mp_file_url}")
+            except OSError as e:
+                print(f"Error removing source video file {mp_file_url}: {e}")
     else:
-        print(f"MP4 video file not found at {mp3_file_path}. Cannot extract audio.")
+        print(f"Source video file not found at {mp_file_url}")
+        return None
 
-    # Clean up the downloaded MP4 file
-    if os.path.exists(mp_file_url):
-        try:
-            os.remove(mp_file_url)
-            print(f"Removed temporary video file: {mp_file_url}")
-        except OSError as e:
-            print(f"Error removing temporary video file {mp_file_url}: {e}")
+    # Cache successful transcription
+    if transcribed_text:
+        cache_transcript(video_id, transcribed_text)
+        print(f"Cached transcript for video ID: {video_id}")
 
     return transcribed_text
 
@@ -159,7 +152,6 @@ async def get_tiktok(tiktok_url: str):
     else:
         output_dir = "tiktok_audio"
     os.makedirs(output_dir, exist_ok=True)
-    mp4_file_path = os.path.join(output_dir, f"{username}_video_{video_id}.mp4")
 
     try:
         # Download video data and video file
@@ -173,25 +165,8 @@ async def get_tiktok(tiktok_url: str):
             output_dir = "tiktok_audio"
         
         os.makedirs(output_dir, exist_ok=True)
-        
-        # Look for any MP4 files in the current directory that might match the pattern
-        current_dir_files = os.listdir(".")
-        mp4_files = [f for f in current_dir_files if f.endswith(".mp4")]
-        
-        # First check for the expected filename pattern
-        expected_filename = f"{username}_video_{video_id}.mp4"
-        if expected_filename in mp4_files:
-            os.rename(expected_filename, mp4_file_path)
-            print(f"Moved {expected_filename} to {mp4_file_path}")
-        # If not found, check for any other MP4 that might be from this download
-        elif mp4_files:
-            # Use the first MP4 file found (assuming it's the one we want)
-            first_mp4 = mp4_files[0]
-            os.rename(first_mp4, mp4_file_path)
-            print(f"Moved {first_mp4} to {mp4_file_path}")
-        else:
-            raise HTTPException(status_code=500, detail=f"Failed to download TikTok video for {video_id}")
-            
+      
+        expected_filename = f"./@{username}_video_{video_id}.mp4" 
         # Check if the CSV file was created
         if not os.path.exists(temp_csv_file):
              raise HTTPException(status_code=500, detail=f"Failed to download TikTok data CSV for {video_id}")
@@ -207,7 +182,7 @@ async def get_tiktok(tiktok_url: str):
                  raise HTTPException(status_code=500, detail=f"Failed to read data from TikTok CSV for {video_id}")
 
         # Extract audio and transcribe (also handles MP4 cleanup)
-        transcribed_text = await extract_audio_and_transcribe(username, video_id, mp4_file_path)
+        transcribed_text = await extract_audio_and_transcribe(username, video_id, expected_filename)
 
         # Prepare final result
         result = {
