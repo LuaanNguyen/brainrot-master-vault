@@ -305,41 +305,41 @@ const Home = () => {
       id: "1",
       title: "Tech News",
       imageUrl:
-        "https://images.unsplash.com/photo-1557838923-2985c318be48?w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop", // Tech/circuits image
     },
     {
       id: "2",
       title: "Natural Disasters",
       imageUrl:
-        "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&auto=format&fit=crop", // Massive wave/storm image
       showPlayButton: false,
     },
     {
       id: "3",
       title: "Health & Fitness Tips",
       imageUrl:
-        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop", // Fitness/running image
       showPlayButton: false,
     },
     {
       id: "4",
       title: "Finance & Investing",
       imageUrl:
-        "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop", // Stock charts image
       showPlayButton: false,
     },
     {
       id: "5",
-      title: "Food & Cooking Trends",
+      title: "Education",
       imageUrl:
-        "https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop", // Education/books image
       showPlayButton: false,
     },
     {
       id: "6",
       title: "Crime",
       imageUrl:
-        "https://images.unsplash.com/photo-1447433865958-f402f562b843?w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1605806616949-1e87b487fc2f?w=800&auto=format&fit=crop", // Prison bars image
     },
   ];
 

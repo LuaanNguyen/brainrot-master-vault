@@ -157,6 +157,7 @@ const RecentlyAddedItem = ({ item }: { item: VideoItemType }) => {
 export default function PlaylistDetail() {
   const { id, title, imageUrl } = useLocalSearchParams();
   const [videos, setVideos] = useState<VideoItemType[]>([]);
+  const [filteredVideos, setFilteredVideos] = useState<VideoItemType[]>([]);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -168,13 +169,48 @@ export default function PlaylistDetail() {
       });
   }, []);
 
+  // Filter videos based on playlist title/id
+  useEffect(() => {
+    if (videos.length > 0) {
+      let filtered: VideoItemType[] = [];
+      const playlistTitle = title as string;
+
+      // Case insensitive matching
+      const lcTitle = playlistTitle.toLowerCase();
+
+      if (lcTitle.includes("tech news") || lcTitle.includes("technology")) {
+        filtered = videos.slice(0, 5);
+      } else if (
+        lcTitle.includes("natural disaster") ||
+        lcTitle.includes("weather")
+      ) {
+        filtered = videos.slice(5, 10);
+      } else if (lcTitle.includes("health") || lcTitle.includes("fitness")) {
+        filtered = videos.slice(10, 15);
+      } else if (lcTitle.includes("finance") || lcTitle.includes("investing")) {
+        filtered = videos.slice(15, 20);
+      } else if (lcTitle.includes("food") || lcTitle.includes("cooking")) {
+        filtered = videos.slice(20, 25);
+      } else if (lcTitle.includes("crime")) {
+        filtered = videos.slice(25, 27);
+      } else {
+        // Default case - show all videos or a subset
+        filtered = videos;
+      }
+
+      setFilteredVideos(filtered);
+    }
+  }, [videos, title]);
+
   // Mock playlist data including summary
   const playlistSummary =
     "A curated collection of short clips about the latest tech trends and innovations that are shaping our digital future. Updated regularly with new content.";
 
-  // Count of items and total duration
-  const itemCount = videos.length || 0;
-  const totalDuration = videos.length ? `${videos.length * 2} min` : "0 min"; // Assuming each video is ~2 minutes
+  // Count of items and total duration - now using filteredVideos
+  const itemCount = filteredVideos.length || 0;
+  const totalDuration = filteredVideos.length
+    ? `${filteredVideos.length * 2} min`
+    : "0 min"; // Assuming each video is ~2 minutes
 
   // Function to handle play/pause
   async function handlePlayPause() {
@@ -284,10 +320,10 @@ export default function PlaylistDetail() {
         {/* Content Title */}
         <Text style={styles.sectionTitle}>All Clips</Text>
 
-        {/* Playlist Content */}
+        {/* Playlist Content - now using filteredVideos */}
         <View style={styles.recentlyAddedList}>
-          {videos.length > 0 ? (
-            videos.map((item) => (
+          {filteredVideos.length > 0 ? (
+            filteredVideos.map((item) => (
               <RecentlyAddedItem
                 key={item.id || item.video_id || Math.random().toString()}
                 item={item}
