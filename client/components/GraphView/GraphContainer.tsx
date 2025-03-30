@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -12,6 +12,7 @@ import Sidebar from "./Sidebar";
 import VideoPanel from "./VideoPanel";
 import MobileSidebar from "./MobileSidebar";
 import { VIDEOS, CATEGORIES } from "./data";
+import { loadAllVideos } from "../../utils/fetchData";
 
 // Import ForceGraphComponent with no SSR to prevent hydration issues
 const ForceGraphComponent = dynamic(() => import("./ForceGraphComponent"), {
@@ -26,6 +27,25 @@ export default function GraphContainer() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedVideos, setSelectedVideos] = useState<Video[]>([]);
+  const [allVideos, setAllVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch videos when component mounts
+  useEffect(() => {
+    const fetchVideos = async () => {
+      setLoading(true);
+      try {
+        const videos = await loadAllVideos();
+        setAllVideos(videos);
+      } catch (error) {
+        console.error("Error loading videos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -50,17 +70,22 @@ export default function GraphContainer() {
     console.log("Menu clicked");
   };
 
-  const handleNodeClick = (node: any) => {
+  const handleNodeClick = (node: any, categoryVideos?: Video[]) => {
     console.log("Node clicked:", node);
 
     const categoryId = node.id;
     setSelectedCategory(categoryId);
 
-    // Filter videos by the selected category
-    const filteredVideos = VIDEOS.filter(
-      (video) => video.categoryId === categoryId
-    );
-    setSelectedVideos(filteredVideos);
+    if (categoryVideos && categoryVideos.length > 0) {
+      // Use the videos passed from ForceGraphComponent if available
+      setSelectedVideos(categoryVideos);
+    } else {
+      // Fall back to filtering from all videos
+      const filteredVideos = allVideos.filter(
+        (video) => video.categoryId === categoryId
+      );
+      setSelectedVideos(filteredVideos);
+    }
   };
 
   return (

@@ -4,19 +4,45 @@ import { useEffect, useRef, useState } from "react";
 import ForceGraph from "force-graph";
 import * as d3 from "d3";
 import { sampleData, categoryVideos } from "../../data/graphData";
+import { loadAllVideos } from "../../utils/fetchData";
 
 export default function ForceGraphComponent({ onNodeClick }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [infoExpanded, setInfoExpanded] = useState(false);
+  const [allVideos, setAllVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch all videos (both sample and API) when component mounts
+  useEffect(() => {
+    const fetchVideos = async () => {
+      setLoading(true);
+      try {
+        const videos = await loadAllVideos();
+        setAllVideos(videos);
+      } catch (error) {
+        console.error("Error loading videos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
 
   const handleNodeClick = (node) => {
-    if (onNodeClick) onNodeClick(node);
-  };
+    setSelectedCategory(node);
 
-  const handleClosePanel = () => {
-    setSelectedCategory(null);
+    // Get videos for this category
+    const categoryVideos = allVideos.filter(
+      (video) => video.categoryId === node.id
+    );
+
+    // Pass both the node and its videos to the parent component
+    if (onNodeClick) {
+      onNodeClick(node, categoryVideos);
+    }
   };
 
   const toggleInfoPanel = () => {
