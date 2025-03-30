@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,11 @@ import {
   StatusBar,
   FlatList,
   Linking,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
+import { useRefresh } from "../../context/RefreshContext";
+import { LinearGradient } from "expo-linear-gradient"; // Add this import
 
 // Filter component
 const FilterTabs = ({ activeTab, setActiveTab }) => {
@@ -24,18 +27,22 @@ const FilterTabs = ({ activeTab, setActiveTab }) => {
           key={tab}
           style={[
             styles.filterTab,
-            activeTab === tab && styles.activeFilterTab,
+            // Remove the activeFilterTab style here since we'll use LinearGradient instead
           ]}
           onPress={() => setActiveTab(tab)}
         >
-          <Text
-            style={[
-              styles.filterText,
-              activeTab === tab && styles.activeFilterText,
-            ]}
-          >
-            {tab}
-          </Text>
+          {activeTab === tab ? (
+            <LinearGradient
+              colors={["#36d0ff", "#4576ff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.activeFilterTabGradient}
+            >
+              <Text style={styles.activeFilterText}>{tab}</Text>
+            </LinearGradient>
+          ) : (
+            <Text style={styles.filterText}>{tab}</Text>
+          )}
         </TouchableOpacity>
       ))}
     </View>
@@ -43,30 +50,43 @@ const FilterTabs = ({ activeTab, setActiveTab }) => {
 };
 
 // Music Item Component
-// Music Item Component
 const MusicItem = ({ item }) => {
   const handlePress = () => {
-    // Navigate to a detail page with the item ID
     router.push({
       pathname: "/PlaylistDetail",
-      params: { id: item.id, title: item.title },
+      params: {
+        id: item.id,
+        title: item.title || item.description,
+        imageUrl: encodeURIComponent(item.imageUrl),
+      },
     });
   };
 
   return (
     <TouchableOpacity style={styles.musicItem} onPress={handlePress}>
       <Image source={{ uri: item.imageUrl }} style={styles.musicCover} />
-      <View style={styles.musicInfo}>
-        <Text style={styles.musicTitle}>{item.title}</Text>
-      </View>
+      <Text style={styles.musicTitle} numberOfLines={2}>
+        {item.description || item.title}
+      </Text>
     </TouchableOpacity>
   );
 };
 
 // Daily Mix Card
 const DailyMixCard = ({ item }) => {
+  const handlePress = () => {
+    router.push({
+      pathname: "/PlaylistDetail",
+      params: {
+        id: item.id,
+        title: item.number ? `Daily Mix ${item.number}` : item.description,
+        imageUrl: encodeURIComponent(item.imageUrl),
+      },
+    });
+  };
+
   return (
-    <TouchableOpacity style={styles.dailyMixCard}>
+    <TouchableOpacity style={styles.dailyMixCard} onPress={handlePress}>
       <Image source={{ uri: item.imageUrl }} style={styles.dailyMixImage} />
       <View style={styles.dailyMixOverlay}>
         <Text style={styles.dailyMixLabel}>Daily Mix</Text>
@@ -93,27 +113,116 @@ const RecentlyAddedItem = ({ item }) => {
     if (diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
   };
+
+  // Handle different video sources and formats
+  const videoId = item.video_id;
+  const source = item.source || "youtube";
+
+  // Extract title from response_data for YouTube videos correctly
+  const title =
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.title) ||
+    (item.response_data && item.response_data.title) ||
+    item.title ||
+    "Untitled";
+
+  // Extract channel title
+  const channelTitle =
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.channelTitle) ||
+    (item.response_data && item.response_data.channelTitle) ||
+    item.channelTitle ||
+    "Unknown";
+
+  // Extract published date
+  const publishedDate =
+    item.publishedAt ||
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.publishedAt) ||
+    (item.response_data && item.response_data.publishedAt);
+
+  // Create appropriate thumbnails based on source
+  const getThumbnailUrl = () => {
+    // Check for thumbnail in response_data items first
+    if (
+      item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.thumbnails &&
+      item.response_data.items[0].snippet.thumbnails.medium
+    ) {
+      return item.response_data.items[0].snippet.thumbnails.medium.url;
+    }
+
+    // Then check other locations
+    if (
+      item.thumbnails ||
+      (item.response_data && item.response_data.thumbnail)
+    ) {
+      return item.thumbnails || item.response_data.thumbnail;
+    }
+
+    // Default thumbnail for YouTube
+    if (source === "youtube") {
+      return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    }
+
+    // Default thumbnail for TikTok (you might need to adjust this)
+    if (source === "tiktok") {
+      return "https://cdn.shopify.com/s/files/1/0070/7032/files/tiktok2_5381bbf7-d33d-4c31-9cbd-6dad2ef3b2ce.png?v=1734596856";
+    }
+
+    return "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&auto=format&fit=crop";
+  };
+
+  // Handle video URL based on source
+  const handleVideoPress = () => {
+    let url = "";
+    if (source === "youtube") {
+      url = `https://youtube.com/watch?v=${videoId}`;
+    } else if (source === "tiktok") {
+      url = `https://tiktok.com/@username/video/${videoId}`;
+    }
+
+    if (url) {
+      Linking.openURL(url);
+    }
+  };
+
   return (
     <TouchableOpacity
       style={styles.recentlyAddedItem}
-      onPress={() => Linking.openURL(`https://youtube.com/shorts/${item.id}`)}
+      onPress={handleVideoPress}
     >
       <View style={styles.videoThumbnailContainer}>
         <Image
-          source={{ uri: item.thumbnails }}
+          source={{ uri: getThumbnailUrl() }}
           style={styles.recentlyAddedCover}
         />
-        <View style={styles.durationBadge}>
-          <Text style={styles.durationText}>
-            {formatDate(item.publishedAt)}
-          </Text>
+        <View style={styles.sourceBadge}>
+          <Text style={styles.sourceText}>{source}</Text>
         </View>
+        {publishedDate && (
+          <View style={styles.durationBadge}>
+            <Text style={styles.durationText}>{formatDate(publishedDate)}</Text>
+          </View>
+        )}
       </View>
       <View style={styles.recentlyAddedInfo}>
         <Text style={styles.recentlyAddedTitle} numberOfLines={2}>
-          {item.title}
+          {title}
         </Text>
-        <Text style={styles.recentlyAddedSubtitle}>{item.channelTitle}</Text>
+        <Text style={styles.recentlyAddedSubtitle}>{channelTitle}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -122,15 +231,73 @@ const RecentlyAddedItem = ({ item }) => {
 // Main App
 const Home = () => {
   const [activeTab, setActiveTab] = useState("All");
-  const [recentlyAddItems, setRecentItems] = useState([]);
+  const [allRecentItems, setAllRecentItems] = useState([]); // All items from the API
+  const [visibleRecentItems, setVisibleRecentItems] = useState([]); // Currently visible items
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+  const { refreshTrigger } = useRefresh();
 
+  // Fetch videos when component mounts or refreshTrigger changes
   useEffect(() => {
+    setLoading(true);
     fetch("https://brainrotapi.codestacx.com/home")
       .then((response) => response.json())
       .then((data) => {
-        setRecentItems(data.videos);
+        const videos = data.videos || [];
+        setAllRecentItems(videos);
+        // Initially show only the first 5 items
+        setVisibleRecentItems(videos.slice(0, ITEMS_PER_PAGE));
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching recent videos:", error);
+        setLoading(false);
       });
-  }, []);
+  }, [refreshTrigger]);
+
+  // Function to load more items
+  const loadMoreItems = () => {
+    if (loading || visibleRecentItems.length >= allRecentItems.length) {
+      return;
+    }
+
+    setLoading(true);
+
+    // Calculate the next set of items to display
+    const nextPage = page + 1;
+    const endIndex = nextPage * ITEMS_PER_PAGE;
+
+    // Add the next batch of items to the visible items
+    setTimeout(() => {
+      setVisibleRecentItems([
+        ...visibleRecentItems,
+        ...allRecentItems.slice(visibleRecentItems.length, endIndex),
+      ]);
+      setPage(nextPage);
+      setLoading(false);
+    }, 500); // Small delay to show loading indicator
+  };
+
+  // Function to check if the user has scrolled to the bottom
+  const isCloseToBottom = ({
+    layoutMeasurement,
+    contentOffset,
+    contentSize,
+  }) => {
+    const paddingToBottom = 20; // How close to the bottom
+    return (
+      layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - paddingToBottom
+    );
+  };
+
+  // Handle scroll event
+  const handleScroll = ({ nativeEvent }) => {
+    if (isCloseToBottom(nativeEvent)) {
+      loadMoreItems();
+    }
+  };
 
   // Mock data
   const categories = [
@@ -151,7 +318,7 @@ const Home = () => {
       id: "3",
       title: "Health & Fitness Tips",
       imageUrl:
-        "https://images.unsplash.com/photo-1571019614242-c5c5dee9f707?w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop",
       showPlayButton: false,
     },
     {
@@ -173,7 +340,6 @@ const Home = () => {
       title: "Science & Space Discoveries",
       imageUrl:
         "https://images.unsplash.com/photo-1447433865958-f402f562b843?w=800&auto=format&fit=crop",
-      showPlayButton: false,
     },
   ];
 
@@ -205,7 +371,10 @@ const Home = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <ScrollView>
+      <ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={400} // Adjust throttle as needed
+      >
         {/* Filter tabs */}
         <FilterTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -220,9 +389,7 @@ const Home = () => {
         {/* Made For You section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Made For You</Text>
-          <TouchableOpacity>
-            <Text style={styles.sectionLink}>Show all</Text>
-          </TouchableOpacity>
+          <TouchableOpacity></TouchableOpacity>
         </View>
 
         {/* Daily mixes horizontal scroll */}
@@ -238,22 +405,39 @@ const Home = () => {
         {/* Recently Added section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recently Added</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={loadMoreItems}>
             <Text style={styles.sectionLink}>See more</Text>
           </TouchableOpacity>
         </View>
 
         {/* Recently Added items - vertical list */}
         <View style={styles.recentlyAddedList}>
-          {recentlyAddItems && recentlyAddItems.length > 0 ? (
-            recentlyAddItems.map((item) => (
-              <RecentlyAddedItem key={item.id} item={item} />
+          {visibleRecentItems && visibleRecentItems.length > 0 ? (
+            visibleRecentItems.map((item) => (
+              <RecentlyAddedItem key={item.id || item.video_id} item={item} />
             ))
           ) : (
             <Text style={styles.recentlyAddedSubtitle}>
               No recent items available
             </Text>
           )}
+
+          {/* Loading indicator at the bottom */}
+          {loading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#4A8FE7" />
+              <Text style={styles.loadingText}>Loading more...</Text>
+            </View>
+          )}
+
+          {/* End of list message */}
+          {!loading &&
+            visibleRecentItems.length >= allRecentItems.length &&
+            allRecentItems.length > 0 && (
+              <Text style={styles.endOfListText}>
+                You've reached the end of the list
+              </Text>
+            )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -278,32 +462,39 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   filterTab: {
+    marginRight: 6,
+    backgroundColor: "#262626", // Only for inactive tabs
+    borderRadius: 16,
+    overflow: "hidden", // Important for the gradient to stay within rounded corners
+  },
+  activeFilterTabGradient: {
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    marginRight: 6,
-    backgroundColor: "#262626", // Slightly lighter gray
-  },
-  activeFilterTab: {
-    backgroundColor: "#2D5D8E", // Medium blue for active tab
   },
   filterText: {
     color: "#CCCCCC", // Light gray
     fontSize: 12,
     fontWeight: "500",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
   activeFilterText: {
     color: "#FFFFFF", // White text for active tab
+    fontSize: 12,
+    fontWeight: "500",
   },
   recentGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     padding: 12,
+    justifyContent: "space-between", // Better spacing between cards
   },
   musicItem: {
-    width: "33.33%", // 3 cards per row
-    paddingHorizontal: 4,
-    marginBottom: 12,
+    width: "31%", // Slightly narrower than 33.33% to allow for more spacing
+    marginBottom: 16, // Increased bottom margin for better separation
+    backgroundColor: "rgba(100, 100, 100, 0.3)", // Subtle background for better text visibility
+    borderRadius: 8,
   },
   musicCover: {
     width: "100%",
@@ -314,10 +505,13 @@ const styles = StyleSheet.create({
     marginTop: 4, // Smaller gap between image and text
   },
   musicTitle: {
-    color: "#E6E6E6",
-    fontSize: 12, // Smaller font size
-    fontWeight: "500",
+    color: "#FFFFFF", // Brighter white for better contrast
+    fontSize: 10, // Smaller font size
+    fontWeight: "600", // Slightly bolder
     textAlign: "center", // Center text
+    margin: 6,
+    paddingHorizontal: 4, // Add some horizontal padding
+    lineHeight: 14, // Tighter line height for better readability
   },
   sectionHeader: {
     flexDirection: "row",
@@ -370,8 +564,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   dailyMixArtists: {
-    color: "#999999",
-    fontSize: 10, // Smaller
+    color: "#FFFFFF", // Changed from #999999 to white
+    fontSize: 10, // Kept the same size
     marginTop: 6,
   },
   // Recently Added styles
@@ -394,6 +588,20 @@ const styles = StyleSheet.create({
   recentlyAddedCover: {
     width: "100%",
     height: "100%",
+  },
+  sourceBadge: {
+    position: "absolute",
+    left: 4,
+    top: 4,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  sourceText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "500",
   },
   durationBadge: {
     position: "absolute",
@@ -424,6 +632,24 @@ const styles = StyleSheet.create({
     color: "#999999",
     fontSize: 12,
     fontWeight: "400",
+  },
+  // New styles for loading and end of list
+  loadingContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  loadingText: {
+    color: "#999999",
+    fontSize: 12,
+    marginLeft: 8,
+  },
+  endOfListText: {
+    color: "#999999",
+    fontSize: 12,
+    textAlign: "center",
+    padding: 16,
   },
 });
 

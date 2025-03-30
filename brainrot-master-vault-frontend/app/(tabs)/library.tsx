@@ -8,16 +8,89 @@ import {
   Image,
   ActivityIndicator,
   Linking,
+  ScrollView,
 } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import { Plus } from "lucide-react-native";
 import { useState, useEffect } from "react";
+import { useRefresh } from "../../context/RefreshContext";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 
 const LibraryScreen = () => {
+  const router = useRouter();
   const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState("categories"); // 'categories' or 'recent'
-  const [recentVideos, setRecentVideos] = useState([]);
+  const [activeTab, setActiveTab] = useState("categories");
+  const [allRecentVideos, setAllRecentVideos] = useState([]); // All videos from API
+  const [visibleRecentVideos, setVisibleRecentVideos] = useState([]); // Currently visible videos
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
+  const ITEMS_PER_PAGE = 10;
+  const { refreshTrigger } = useRefresh();
+
+  // Fetch recent videos from API
+  useEffect(() => {
+    if (activeTab === "recent") {
+      setLoading(true);
+      setPage(1); // Reset page when tab changes
+      setHasReachedEnd(false);
+
+      fetch("https://brainrotapi.codestacx.com/home")
+        .then((response) => response.json())
+        .then((data) => {
+          const videos = data.videos || [];
+          setAllRecentVideos(videos);
+          // Initially show only the first 5 items
+          setVisibleRecentVideos(videos.slice(0, ITEMS_PER_PAGE));
+          setHasReachedEnd(videos.length <= ITEMS_PER_PAGE);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching recent videos:", error);
+          setLoading(false);
+        });
+    }
+  }, [activeTab, refreshTrigger]);
+
+  // Function to load more items
+  const loadMoreItems = () => {
+    if (loadingMore || hasReachedEnd || activeTab !== "recent") {
+      return;
+    }
+
+    setLoadingMore(true);
+
+    // Calculate the next set of items to display
+    const nextPage = page + 1;
+    const startIndex = page * ITEMS_PER_PAGE; // Fix: Use page * ITEMS_PER_PAGE instead of visibleRecentVideos.length
+    const endIndex = nextPage * ITEMS_PER_PAGE;
+
+    // Add the next batch of items to the visible items
+    setTimeout(() => {
+      const newItems = allRecentVideos.slice(startIndex, endIndex);
+
+      if (newItems.length > 0) {
+        setVisibleRecentVideos((prev) => [...prev, ...newItems]);
+        setPage(nextPage);
+      }
+
+      // Check if we've reached the end
+      if (endIndex >= allRecentVideos.length) {
+        setHasReachedEnd(true);
+      }
+
+      setLoadingMore(false);
+    }, 500); // Small delay to show loading indicator
+  };
+
+  // Handle scroll event for FlatList
+  const handleOnEndReached = () => {
+    if (!loading && !loadingMore && activeTab === "recent") {
+      loadMoreItems();
+    }
+  };
 
   // Mock data for categories with added image URLs
   const categories = [
@@ -79,26 +152,19 @@ const LibraryScreen = () => {
     },
   ];
 
-  // Fetch recent videos from API
-  useEffect(() => {
-    if (activeTab === "recent") {
-      setLoading(true);
-      fetch("https://brainrotapi.codestacx.com/home")
-        .then((response) => response.json())
-        .then((data) => {
-          setRecentVideos(data.videos);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching recent videos:", error);
-          setLoading(false);
-        });
-    }
-  }, [activeTab]);
-
   const renderCategoryItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.categoryItem, { borderBottomColor: colors.border }]}
+      onPress={() => {
+        router.push({
+          pathname: "/PlaylistDetail",
+          params: {
+            id: item.id,
+            title: item.title,
+            imageUrl: encodeURIComponent(item.imageUrl),
+          },
+        });
+      }}
     >
       <Image
         source={{ uri: item.imageUrl }}
@@ -128,36 +194,157 @@ const LibraryScreen = () => {
     return date.toLocaleDateString();
   };
 
-  const renderVideoItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.recentlyAddedItem}
-      onPress={() => Linking.openURL(`https://youtube.com/shorts/${item.id}`)}
-    >
-      <View style={styles.videoThumbnailContainer}>
-        <Image
-          source={{
-            uri: item.thumbnails || "https://via.placeholder.com/120x70",
-          }}
-          style={styles.recentlyAddedCover}
-          resizeMode="cover"
-        />
-        <View style={styles.durationBadge}>
-          <Text style={styles.durationText}>
-            {formatDate(item.publishedAt)}
-          </Text>
+  const renderVideoItem = ({ item }) => {
+    // Handle different video sources and formats
+    const videoId = item.video_id || item.id;
+    const source = item.source || "youtube";
+
+    // Extract title from response_data for YouTube videos correctly
+    const title =
+      (item.response_data &&
+        item.response_data.items &&
+        item.response_data.items[0] &&
+        item.response_data.items[0].snippet &&
+        item.response_data.items[0].snippet.title) ||
+      (item.response_data && item.response_data.title) ||
+      item.title ||
+      "Untitled";
+
+    // Extract channel title
+    const channelTitle =
+      (item.response_data &&
+        item.response_data.items &&
+        item.response_data.items[0] &&
+        item.response_data.items[0].snippet &&
+        item.response_data.items[0].snippet.channelTitle) ||
+      (item.response_data && item.response_data.channelTitle) ||
+      item.channelTitle ||
+      "Unknown";
+
+    // Extract published date
+    const publishedDate =
+      item.publishedAt ||
+      (item.response_data &&
+        item.response_data.items &&
+        item.response_data.items[0] &&
+        item.response_data.items[0].snippet &&
+        item.response_data.items[0].snippet.publishedAt) ||
+      (item.response_data && item.response_data.publishedAt);
+
+    // Create appropriate thumbnails based on source
+    const getThumbnailUrl = () => {
+      // Check for thumbnail in response_data items first
+      if (
+        item.response_data &&
+        item.response_data.items &&
+        item.response_data.items[0] &&
+        item.response_data.items[0].snippet &&
+        item.response_data.items[0].snippet.thumbnails &&
+        item.response_data.items[0].snippet.thumbnails.medium
+      ) {
+        return item.response_data.items[0].snippet.thumbnails.medium.url;
+      }
+
+      // Then check other locations
+      if (
+        item.thumbnails ||
+        (item.response_data && item.response_data.thumbnail)
+      ) {
+        return item.thumbnails || item.response_data.thumbnail;
+      }
+
+      // Default thumbnail for YouTube
+      if (source === "youtube") {
+        return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      }
+
+      // Default thumbnail for TikTok
+      if (source === "tiktok") {
+        return "https://cdn.shopify.com/s/files/1/0070/7032/files/tiktok2_5381bbf7-d33d-4c31-9cbd-6dad2ef3b2ce.png?v=1734596856";
+      }
+
+      return "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&auto=format&fit=crop";
+    };
+
+    // Handle video URL based on source
+    const handleVideoPress = () => {
+      let url = "";
+      if (source === "youtube") {
+        url = `https://youtube.com/watch?v=${videoId}`;
+      } else if (source === "tiktok") {
+        url = `https://tiktok.com/@username/video/${videoId}`;
+      }
+
+      if (url) {
+        Linking.openURL(url);
+      }
+    };
+
+    return (
+      <TouchableOpacity
+        style={styles.recentlyAddedItem}
+        onPress={handleVideoPress}
+      >
+        <View style={styles.videoThumbnailContainer}>
+          <Image
+            source={{ uri: getThumbnailUrl() }}
+            style={styles.recentlyAddedCover}
+            resizeMode="cover"
+          />
+          <View style={styles.sourceBadge}>
+            <Text style={styles.sourceText}>{source}</Text>
+          </View>
+          {publishedDate && (
+            <View style={styles.durationBadge}>
+              <Text style={styles.durationText}>
+                {formatDate(publishedDate)}
+              </Text>
+            </View>
+          )}
         </View>
-      </View>
-      <View style={styles.recentlyAddedInfo}>
-        <Text
-          style={[styles.recentlyAddedTitle, { color: colors.text }]}
-          numberOfLines={2}
-        >
-          {item.title}
+        <View style={styles.recentlyAddedInfo}>
+          <Text
+            style={[styles.recentlyAddedTitle, { color: colors.text }]}
+            numberOfLines={2}
+          >
+            {title}
+          </Text>
+          <Text style={styles.recentlyAddedSubtitle}>{channelTitle}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // Footer component for loading indicator
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={colors.primary} />
+        <Text style={[styles.loadingMoreText, { color: colors.text }]}>
+          Loading more...
         </Text>
-        <Text style={styles.recentlyAddedSubtitle}>{item.channelTitle}</Text>
       </View>
-    </TouchableOpacity>
-  );
+    );
+  };
+
+  const renderEndOfList = () => {
+    if (
+      !hasReachedEnd ||
+      activeTab !== "recent" ||
+      allRecentVideos.length === 0
+    )
+      return null;
+
+    return (
+      <View style={styles.endOfListContainer}>
+        <Text style={[styles.endOfListText, { color: colors.text }]}>
+          You've reached the end of the list
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -173,43 +360,68 @@ const LibraryScreen = () => {
           style={[
             styles.filterButton,
             {
-              backgroundColor:
-                activeTab === "categories" ? colors.primary : colors.card,
               borderColor:
                 activeTab === "categories" ? "transparent" : colors.border,
+              overflow: "hidden", // To keep gradient within border radius
             },
           ]}
           onPress={() => setActiveTab("categories")}
         >
-          <Text
-            style={[
-              styles.filterButtonText,
-              { color: activeTab === "categories" ? "white" : colors.text },
-            ]}
-          >
-            Categories
-          </Text>
+          {activeTab === "categories" ? (
+            <LinearGradient
+              colors={["#36d0ff", "#4576ff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.activeFilterGradient}
+            >
+              <Text style={styles.activeFilterText}>Categories</Text>
+            </LinearGradient>
+          ) : (
+            <View
+              style={[
+                styles.inactiveFilterButton,
+                { backgroundColor: colors.card },
+              ]}
+            >
+              <Text style={[styles.filterButtonText, { color: colors.text }]}>
+                Categories
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[
             styles.filterButton,
             {
-              backgroundColor:
-                activeTab === "recent" ? colors.primary : colors.card,
               borderColor:
                 activeTab === "recent" ? "transparent" : colors.border,
+              overflow: "hidden", // To keep gradient within border radius
             },
           ]}
           onPress={() => setActiveTab("recent")}
         >
-          <Text
-            style={[
-              styles.filterButtonText,
-              { color: activeTab === "recent" ? "white" : colors.text },
-            ]}
-          >
-            Recently Added
-          </Text>
+          {activeTab === "recent" ? (
+            <LinearGradient
+              colors={["#36d0ff", "#4576ff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.activeFilterGradient}
+            >
+              <Text style={styles.activeFilterText}>Recently Added</Text>
+            </LinearGradient>
+          ) : (
+            <View
+              style={[
+                styles.inactiveFilterButton,
+                { backgroundColor: colors.card },
+              ]}
+            >
+              <Text style={[styles.filterButtonText, { color: colors.text }]}>
+                Recently Added
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -219,12 +431,24 @@ const LibraryScreen = () => {
         </View>
       ) : (
         <FlatList
-          data={activeTab === "categories" ? categories : recentVideos}
+          data={activeTab === "categories" ? categories : visibleRecentVideos}
           renderItem={
             activeTab === "categories" ? renderCategoryItem : renderVideoItem
           }
-          keyExtractor={(item) => item.id || item._id || String(Math.random())}
+          keyExtractor={(item) =>
+            item.id || item._id || item.video_id || String(Math.random())
+          }
           contentContainerStyle={styles.list}
+          ListFooterComponent={
+            activeTab === "recent" ? (
+              <>
+                {renderFooter()}
+                {renderEndOfList()}
+              </>
+            ) : null
+          }
+          onEndReached={activeTab === "recent" ? handleOnEndReached : null}
+          onEndReachedThreshold={0.3}
         />
       )}
     </View>
@@ -255,12 +479,22 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderRadius: 20,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "transparent",
+  },
+  activeFilterGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  activeFilterText: {
+    color: "white",
+    fontWeight: "500",
+  },
+  inactiveFilterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   filterButtonText: {
     fontWeight: "500",
@@ -301,7 +535,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // New styles for recently added items, matching the example
+  // Styles for recently added items
   recentlyAddedItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -321,6 +555,20 @@ const styles = StyleSheet.create({
   recentlyAddedCover: {
     width: "100%",
     height: "100%",
+  },
+  sourceBadge: {
+    position: "absolute",
+    left: 4,
+    top: 4,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  sourceText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "500",
   },
   durationBadge: {
     position: "absolute",
@@ -350,6 +598,28 @@ const styles = StyleSheet.create({
     color: "#999999",
     fontSize: 12,
     fontWeight: "400",
+  },
+
+  // Footer loader styles
+  footerLoader: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+  },
+  loadingMoreText: {
+    marginLeft: 8,
+    fontSize: 12,
+  },
+
+  // End of list styles
+  endOfListContainer: {
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  endOfListText: {
+    fontSize: 12,
+    opacity: 0.7,
   },
 });
 
