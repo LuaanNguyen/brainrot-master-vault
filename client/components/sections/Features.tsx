@@ -39,7 +39,7 @@ export default function Features() {
     {
       title: "Knowledge Vaults",
       description:
-        "Create and share collections of your favorite podcast insights with friends to spread valuable knowledge.",
+        "Create and share collections of your favorite shorts with friends to spread valuable knowledge.",
       icon: <Layers className="size-6" />,
       color: "from-violet-500 to-purple-400",
       shadowColor: "shadow-violet-400/20",
@@ -113,12 +113,12 @@ export default function Features() {
             There's a Better Way
           </Badge>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
-            Replace Doom Scrolling with Deep Learning
+            Engage in Passive Learning Intentially
           </h2>
           <p className="max-w-[800px] text-slate-600 md:text-xl">
-            Our podcast platform enables productive multitasking during daily
-            activities, helping you reclaim hours spent on shallow content for
-            meaningful knowledge acquisition.
+            Our platform enables users to collect saved short videos from
+            platform such as TikTok, Instagram, YouTubes and covert it to
+            productive podcast
           </p>
         </motion.div>
 

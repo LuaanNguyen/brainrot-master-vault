@@ -110,7 +110,7 @@ export default function Navbar({
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-full border-blue-200 text-blue-700 hover:bg-blue-50"
+                className="rounded-full border-blue-200 text-blue-700 hover:bg-blue-50 cursor-not-allowed"
               >
                 Sign In
               </Button>
@@ -118,7 +118,7 @@ export default function Navbar({
 
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-200/50 hover:shadow-lg hover:shadow-blue-300/50 border-0">
-                Get Started
+                <Link href="/graph-view">Get Started</Link>
                 <ChevronRight className="ml-1 size-4" />
               </Button>
             </motion.div>

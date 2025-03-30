@@ -34,10 +34,10 @@ export default function Problem() {
 
   // Chart data for time spent
   const timeData = [
-    { platform: "TikTok", hours: 1.5, color: "#ff0050" },
-    { platform: "Instagram Reels", hours: 0.9, color: "#833AB4" },
-    { platform: "YouTube Shorts", hours: 0.8, color: "#FF0000" },
-    { platform: "Snapchat", hours: 0.5, color: "#FFFC00" },
+    { platform: "TikTok", hours: 2, color: "#ff0050" },
+    { platform: "Instagram Reels", hours: 1.9, color: "#833AB4" },
+    { platform: "YouTube Shorts", hours: 1.1, color: "#FF0000" },
+    { platform: "Facebook Shorts", hours: 1, color: "	#1877F2" },
   ];
 
   // Impact metrics
@@ -128,7 +128,8 @@ export default function Problem() {
                   <CardContent className="p-6">
                     <h3 className="text-xl font-bold mb-4">Daily Time Sink</h3>
                     <p className="text-sm text-slate-500 mb-6">
-                      Average hours spent daily on short-form content platforms
+                      Average hours a person spends daily on short-form content
+                      platforms
                     </p>
                     <div className="h-80 w-full flex items-end justify-around gap-4 pt-6">
                       {timeData.map((item, i) => (
@@ -209,7 +210,7 @@ export default function Problem() {
                     <div className="flex items-center justify-center my-6">
                       <div className="text-center">
                         <div className="text-5xl font-bold text-red-600">
-                          550+
+                          2,439+
                         </div>
                         <div className="text-sm text-slate-600 mt-2">
                           Hours spent annually
@@ -219,11 +220,11 @@ export default function Problem() {
                     <div className="space-y-3 text-sm text-slate-600">
                       <div className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-teal-500 mr-2"></div>
-                        <span>Equivalent to 23 full days</span>
+                        <span>Equivalent to 101 full days</span>
                       </div>
                       <div className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-blue-500 mr-2"></div>
-                        <span>Could read 45+ books</span>
+                        <span>Could read 16+ books</span>
                       </div>
                       <div className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-purple-500 mr-2"></div>
