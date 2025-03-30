@@ -122,7 +122,18 @@ const categorizeVideo = (video: any): string => {
 // Function to fetch videos from API and process them
 export const fetchVideosFromAPI = async (): Promise<Video[]> => {
   try {
-    const response = await fetch("https://brainrotapi.codestacx.com/home");
+    // Use a CORS proxy for development
+    const corsProxy = "https://cors-anywhere.herokuapp.com/";
+    const baseUrl = "https://brainrotapi.codestacx.com/home";
+    const apiUrl = `${corsProxy}${baseUrl}`;
+
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: window.location.origin,
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`Error fetching videos: ${response.status}`);

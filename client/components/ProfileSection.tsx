@@ -33,6 +33,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
+import AddContentModal from "./AddContentModal";
 
 // Mock data for team members
 const teamMembers = [
@@ -207,6 +208,7 @@ export default function ProfileSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const timelineRef = useRef<HTMLDivElement>(null);
   const [expandedCommit, setExpandedCommit] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   // Auto-scroll to the top of timeline on mount
   useEffect(() => {
@@ -223,6 +225,27 @@ export default function ProfileSection() {
       (commit.category &&
         commit.category.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  // Handle content added from modal
+  const handleContentAdded = (content: any) => {
+    console.log("Content added:", content);
+    const newCommit = {
+      id: `commit-${Date.now()}`,
+      user: teamMembers[0],
+      action: "added" as Action,
+      contentType: "video" as ContentType,
+      content: content.title,
+      category: content.source === "youtube" ? "Videos" : "TikTok",
+      timestamp: new Date(),
+      branch: "main",
+      commitHash: content.id.substring(0, 7),
+    };
+
+    commitHistory.unshift(newCommit);
+
+    // Force a refresh
+    setSearchQuery(searchQuery + " ");
+  };
 
   return (
     <div className="bg-white rounded-xl m-2 shadow-sm  overflow-hidden flex flex-col">
@@ -573,7 +596,10 @@ export default function ProfileSection() {
                       {filteredCommits.length}{" "}
                       {filteredCommits.length === 1 ? "commit" : "commits"}
                     </span>
-                    <Button className="h-7 text-xs gap-1 px-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+                    <Button
+                      className="h-7 text-xs gap-1 px-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                      onClick={() => setShowModal(true)}
+                    >
                       <PlusCircle className="w-3.5 h-3.5" />
                       Add Content
                     </Button>
@@ -727,6 +753,13 @@ export default function ProfileSection() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add Content Modal */}
+      <AddContentModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onContentAdded={handleContentAdded}
+      />
     </div>
   );
 }
