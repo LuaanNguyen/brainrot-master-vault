@@ -141,7 +141,7 @@ const VIDEOS: Video[] = [
 ];
 
 // Categories
-const CATEGORIES: Category[] = [
+export const CATEGORIES: Category[] = [
   { id: "food", label: "Food & Cooking", color: "#FF6B6B" },
   { id: "tech", label: "Technology", color: "#4ECDC4" },
   { id: "travel", label: "Travel", color: "#FFD166" },
@@ -373,25 +373,6 @@ export default function GraphContainer() {
                       <p className="text-muted-foreground text-sm mb-6">
                         Select a node to see related videos and details.
                       </p>
-                      <div className="space-y-4">
-                        <div className="p-4 border rounded-lg">
-                          <h3 className="font-medium">Hot Topics</h3>
-                          <ul className="mt-2 space-y-1 text-sm">
-                            {CATEGORIES.map((category) => (
-                              <li
-                                key={category.id}
-                                className="flex items-center gap-2"
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full`}
-                                  style={{ backgroundColor: category.color }}
-                                ></span>
-                                <span>{category.label}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
                     </>
                   )}
                 </div>
