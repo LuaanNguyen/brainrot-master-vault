@@ -1,67 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ForceGraph from "force-graph";
 import * as d3 from "d3";
-
-// Sample data
-const sampleData = {
-  nodes: [
-    { id: "food", name: "Food & Cooking", color: "#FF6B6B", val: 20 },
-    { id: "tech", name: "Technology", color: "#4ECDC4", val: 20 },
-    { id: "travel", name: "Travel", color: "#FFD166", val: 20 },
-    { id: "science", name: "Science", color: "#6A0572", val: 20 },
-    { id: "history", name: "History", color: "#F7B801", val: 20 },
-    { id: "art", name: "Art & Culture", color: "#1A535C", val: 20 },
-    { id: "fitness", name: "Fitness & Health", color: "#9BC53D", val: 20 },
-    { id: "finance", name: "Finance", color: "#5C2A9D", val: 20 },
-    { id: "music", name: "Music", color: "#E84A5F", val: 20 },
-    { id: "books", name: "Books & Literature", color: "#355C7D", val: 20 },
-    { id: "movies", name: "Movies & TV", color: "#FFA69E", val: 20 },
-    { id: "gaming", name: "Gaming", color: "#2A9D8F", val: 20 },
-    { id: "education", name: "Education", color: "#E63946", val: 20 },
-    { id: "fashion", name: "Fashion", color: "#9D4EDD", val: 20 },
-    { id: "nature", name: "Nature & Environment", color: "#40916C", val: 20 },
-    { id: "politics", name: "Politics", color: "#457B9D", val: 20 },
-  ],
-  links: [
-    { source: "food", target: "science" },
-    { source: "food", target: "fitness" },
-    { source: "food", target: "nature" },
-    { source: "tech", target: "science" },
-    { source: "tech", target: "finance" },
-    { source: "tech", target: "gaming" },
-    { source: "tech", target: "education" },
-    { source: "travel", target: "art" },
-    { source: "travel", target: "nature" },
-    { source: "travel", target: "books" },
-    { source: "science", target: "history" },
-    { source: "science", target: "education" },
-    { source: "science", target: "nature" },
-    { source: "history", target: "art" },
-    { source: "history", target: "books" },
-    { source: "history", target: "politics" },
-    { source: "art", target: "music" },
-    { source: "art", target: "fashion" },
-    { source: "art", target: "movies" },
-    { source: "fitness", target: "food" },
-    { source: "fitness", target: "science" },
-    { source: "fitness", target: "nature" },
-    { source: "finance", target: "history" },
-    { source: "finance", target: "politics" },
-    { source: "music", target: "movies" },
-    { source: "books", target: "education" },
-    { source: "books", target: "movies" },
-    { source: "movies", target: "gaming" },
-    { source: "education", target: "politics" },
-    { source: "fashion", target: "music" },
-    { source: "nature", target: "politics" },
-  ],
-};
+import { sampleData, categoryVideos } from "../../data/graphData";
 
 export default function ForceGraphComponent({ onNodeClick }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const handleNodeClick = (node) => {
+    setSelectedCategory(node.id);
+    if (onNodeClick) onNodeClick(node);
+  };
+
+  const handleClosePanel = () => {
+    setSelectedCategory(null);
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -77,7 +33,7 @@ export default function ForceGraphComponent({ onNodeClick }) {
       .linkColor(() => "rgba(0, 0, 0, 0.7)")
       .linkWidth(2)
       .onNodeClick((node) => {
-        if (onNodeClick) onNodeClick(node);
+        handleNodeClick(node);
       })
       // Modify the force parameters correctly
       .d3AlphaDecay(0.02)
@@ -231,9 +187,91 @@ export default function ForceGraphComponent({ onNodeClick }) {
   }, [onNodeClick]);
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full min-h-[500px] bg-background"
-    ></div>
+    <div className="flex flex-col w-full h-full">
+      <div
+        ref={containerRef}
+        className="w-full h-full min-h-[500px] bg-background"
+      ></div>
+
+      {selectedCategory && (
+        <div className="p-4 bg-white shadow-md rounded-md mt-4 relative">
+          <button
+            onClick={handleClosePanel}
+            className="absolute right-4 top-4 text-gray-500 hover:text-gray-800"
+            aria-label="Close panel"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+
+          <h2 className="text-xl font-bold mb-3 capitalize">
+            {selectedCategory} Videos
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {categoryVideos[selectedCategory].map((video, index) => (
+              <div
+                key={index}
+                className="bg-gray-50 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
+                <div className="relative cursor-pointer group">
+                  <img
+                    src={video.thumbnail}
+                    alt={video.title}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs">
+                    {video.duration}
+                  </div>
+                  <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
+                    {video.platform}
+                  </div>
+
+                  {/* Play button overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="bg-black bg-opacity-50 rounded-full p-3">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="white"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <h3 className="font-medium text-sm">{video.title}</h3>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 text-center">
+            <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors duration-200">
+              View All {selectedCategory} Videos
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
