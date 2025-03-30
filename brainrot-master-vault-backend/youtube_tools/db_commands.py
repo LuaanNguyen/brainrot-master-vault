@@ -23,6 +23,17 @@ def init_db():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+
+        # Create classification table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS classification (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                video_id TEXT NOT NULL,
+                classification TEXT NOT NULL,
+                FOREIGN KEY (video_id) REFERENCES cache (video_id)
+            );
+        ''')
+
         # Add transcript column if it doesn't exist
         try:
             cursor.execute("ALTER TABLE cache ADD COLUMN transcript TEXT")
@@ -44,6 +55,7 @@ def init_db():
                 raise e
             # else:
             #     print("'source' column already exists.") # Optional: uncomment for verbose logging
+
         # Add summary column if it doesn't exist
         try:
             cursor.execute("ALTER TABLE cache ADD COLUMN summary TEXT")
@@ -144,6 +156,54 @@ def cache_transcript(video_id: str, transcript: str):
         if conn:
             conn.close()
 
+def add_classification(video_id: str, classification: str):
+    # check if the video is already classified is the classification
+    conn = None
+    print(f"Adding classification for video ID: {video_id}")
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        # Check if the video_id already exists in the classification table
+        cursor.execute("SELECT 1 FROM classification WHERE video_id = ? AND classification = ?", (video_id, classification))
+        exists = cursor.fetchone() is not None
+
+        if not exists:
+            # Insert new classification if it doesn't exist
+            cursor.execute('''
+                INSERT INTO classification (video_id, classification)
+                VALUES (?, ?)
+            ''', (video_id, classification))
+
+            conn.commit()
+            print(f"Added classification '{classification}' for video ID: {video_id}")
+        else:
+            print(f"Classification '{classification}' for video ID {video_id} already exists.")
+    except sqlite3.Error as e:
+        print(f"Database error adding classification for {video_id}: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+def get_classification(video_id: str):
+    """Fetches the classification for a given video_id."""
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT classification FROM classification WHERE video_id = ?", (video_id,))
+        classifications = [row[0] for row in cursor.fetchall()]
+        # Return the classification if it exists and is not None, otherwise return None
+        return classifications
+    except sqlite3.Error as e:
+        print(f"Database error fetching classification for {video_id}: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+
 def cache_summary(video_id: str, summary: str):
     """Stores or updates the summary for a given video_id."""
     conn = None
@@ -224,11 +284,13 @@ def get_all(user: str = None):
         for row in results:
             video_id, response_data_json, transcript, source = row
             response_data = json.loads(response_data_json) if response_data_json else None
+            classification = get_classification(video_id)
             all_data.append({
                 "video_id": video_id,
                 "response_data": response_data,
                 "transcript": transcript,
-                "source": source # Include the source
+                "source": source, # Include the source
+                "classification": classification if classification else [], # Ensure classification is a list
             })
         return all_data
     except sqlite3.Error as e:
