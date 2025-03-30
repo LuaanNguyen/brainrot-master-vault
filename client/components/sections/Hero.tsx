@@ -24,7 +24,7 @@ export default function Hero() {
   const features = [
     {
       icon: <HeadphonesIcon className="size-4" />,
-      title: "Smart Content Filtering",
+      title: "Smart Content Generator",
       description: "Curated podcasts tailored to your interests",
     },
     {
@@ -34,8 +34,8 @@ export default function Hero() {
     },
     {
       icon: <Clock className="size-4" />,
-      title: "Productive Learning",
-      description: "Transform downtime into growth time",
+      title: "Collaborative Learning",
+      description: "Collect information and learn with friends",
     },
   ];
 
@@ -175,7 +175,8 @@ export default function Hero() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9, duration: 0.7 }}
           >
-            Transform your idle time into productive learning with our
+            Transform short-formed videos into productive learning with our{" "}
+            <br />
             <span className="text-blue-600 font-medium">
               {" "}
               AI-powered podcast platform
@@ -189,7 +190,7 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1, duration: 0.5 }}
           >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+            {/* <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
               <Button
                 size="lg"
                 className="rounded-full h-14 px-8 text-base bg-gradient-to-r from-blue-600 to-violet-600 text-white border-0 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
@@ -197,7 +198,7 @@ export default function Hero() {
                 <Link href="/graph-view"> Try Now</Link>
                 <ChevronRight className="ml-1 size-4" />
               </Button>
-            </motion.div>
+            </motion.div> */}
 
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
               <Button
@@ -205,7 +206,7 @@ export default function Hero() {
                 variant="outline"
                 className="rounded-full h-14 px-8 text-base border-blue-200 text-blue-700 hover:bg-blue-50"
               >
-                <Link href="/graph-view"> See How It Works</Link>
+                <Link href="/graph-view">Access Knowledge Vault</Link>
 
                 <ArrowUpRight className="ml-1 size-4" />
               </Button>
@@ -290,7 +291,7 @@ export default function Hero() {
               </div>
 
               <Image
-                src="https://cdn.dribbble.com/userupload/12302729/file/original-fa372845e394ee85bebe0389b9d86871.png?resize=1504x1128&vertical=center"
+                src="demo.png"
                 width={1280}
                 height={720}
                 alt="Brainrot Master Vault Dashboard"
