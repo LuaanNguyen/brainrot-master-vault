@@ -85,12 +85,12 @@ async def extract_audio_and_transcribe(username: str, video_id: str, mp_file_url
         print(f"MP4 video file not found at {mp3_file_path}. Cannot extract audio.")
 
     # Clean up the downloaded MP4 file
-    if os.path.exists(mp3_file_path):
+    if os.path.exists(mp_file_url):
         try:
-            os.remove(mp3_file_path)
-            print(f"Removed temporary video file: {mp3_file_path}")
+            os.remove(mp_file_url)
+            print(f"Removed temporary video file: {mp_file_url}")
         except OSError as e:
-            print(f"Error removing temporary video file {mp3_file_path}: {e}")
+            print(f"Error removing temporary video file {mp_file_url}: {e}")
 
     return transcribed_text
 
