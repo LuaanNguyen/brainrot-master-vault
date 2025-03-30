@@ -13,16 +13,29 @@ import {
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { useEffect } from "react";
 import { LinearGradient } from "expo-linear-gradient";
+import { Audio } from "expo-av";
 
 // Get screen width for responsive sizing
 const { width } = Dimensions.get("window");
 const coverSize = width - 32; // Full width minus padding
 
+// Define interface for Video Item
+interface VideoItemType {
+  id?: string;
+  video_id?: string;
+  source?: string;
+  title?: string;
+  channelTitle?: string;
+  publishedAt?: string;
+  thumbnails?: string; // Assuming string URL, adjust if object
+  response_data?: any; // Keeping this flexible for now
+}
+
 // Format date helper function
-const formatDate = (dateString) => {
+const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
-  const diffTime = Math.abs(now - date);
+  const diffTime = Math.abs(now.getTime() - date.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return "Today";
@@ -32,7 +45,7 @@ const formatDate = (dateString) => {
 };
 
 // Recently Added Item Component
-const RecentlyAddedItem = ({ item }) => {
+const RecentlyAddedItem = ({ item }: { item: VideoItemType }) => {
   // Extract video details from nested response data
   const videoId = item.video_id || item.id;
   const source = item.source || "youtube";
@@ -143,7 +156,9 @@ const RecentlyAddedItem = ({ item }) => {
 
 export default function PlaylistDetail() {
   const { id, title, imageUrl } = useLocalSearchParams();
-  const [videos, setVideos] = useState([]);
+  const [videos, setVideos] = useState<VideoItemType[]>([]);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     fetch("https://brainrotapi.codestacx.com/home")
@@ -160,6 +175,59 @@ export default function PlaylistDetail() {
   // Count of items and total duration
   const itemCount = videos.length || 0;
   const totalDuration = videos.length ? `${videos.length * 2} min` : "0 min"; // Assuming each video is ~2 minutes
+
+  // Function to handle play/pause
+  async function handlePlayPause() {
+    if (sound) {
+      if (isPlaying) {
+        console.log("Pausing Sound");
+        await sound.pauseAsync();
+        setIsPlaying(false);
+      } else {
+        console.log("Playing Sound");
+        await sound.playAsync();
+        setIsPlaying(true);
+      }
+    } else {
+      console.log("Loading Sound");
+      try {
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          require("../assets/podcasts/tech_podcast.mp3") // Use require for static assets
+        );
+        setSound(newSound);
+        console.log("Playing Sound");
+        await newSound.playAsync();
+        setIsPlaying(true);
+
+        // Add listener for when playback finishes
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            setIsPlaying(false);
+            // Optionally unload or reset position
+            // newSound.unloadAsync();
+            // setSound(null);
+            newSound.setPositionAsync(0); // Reset to start
+          } else if (status.isLoaded === false && status.error) {
+            console.error(`Playback Error: ${status.error}`);
+            setIsPlaying(false); // Ensure state is updated on error
+            setSound(null); // Clear the sound object on error
+          }
+        });
+      } catch (error) {
+        console.error("Failed to load or play sound", error);
+      }
+    }
+  }
+
+  // Effect to unload sound on component unmount
+  useEffect(() => {
+    return sound
+      ? () => {
+          console.log("Unloading Sound");
+          sound.unloadAsync();
+        }
+      : undefined;
+  }, [sound]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -180,7 +248,7 @@ export default function PlaylistDetail() {
           {/* Album Cover Image */}
           {imageUrl && (
             <Image
-              source={{ uri: decodeURIComponent(imageUrl) }}
+              source={{ uri: decodeURIComponent(imageUrl as string) }}
               style={styles.coverImage}
               resizeMode="cover"
             />
@@ -197,14 +265,16 @@ export default function PlaylistDetail() {
           </Text>
 
           {/* Play Button with Linear Gradient */}
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handlePlayPause}>
             <LinearGradient
               colors={["#36d0ff", "#4576ff"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.playButton}
             >
-              <Text style={styles.playButtonText}>▶ Summarize</Text>
+              <Text style={styles.playButtonText}>
+                {isPlaying ? "❚❚ Pause" : "▶ Summarize"}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
