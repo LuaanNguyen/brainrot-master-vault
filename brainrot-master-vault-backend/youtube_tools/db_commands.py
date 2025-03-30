@@ -44,6 +44,16 @@ def init_db():
                 raise e
             # else:
             #     print("'source' column already exists.") # Optional: uncomment for verbose logging
+        # Add summary column if it doesn't exist
+        try:
+            cursor.execute("ALTER TABLE cache ADD COLUMN summary TEXT")
+            print("Added 'summary' column to cache table.")
+        except sqlite3.OperationalError as e:
+            # Ignore error if column already exists
+            if "duplicate column name" not in str(e):
+                raise e
+            # else:
+            #     print("'summary' column already exists.") # Optional: uncomment for verbose logging
 
         conn.commit()
         print(f"Database initialized successfully at {DB_PATH}")
@@ -134,6 +144,54 @@ def cache_transcript(video_id: str, transcript: str):
         if conn:
             conn.close()
 
+def cache_summary(video_id: str, summary: str):
+    """Stores or updates the summary for a given video_id."""
+    conn = None
+    print(f"Caching summary for video ID: {video_id}")
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # First check if video_id exists
+        cursor.execute("SELECT 1 FROM cache WHERE video_id = ?", (video_id,))
+        exists = cursor.fetchone() is not None
+        
+        if exists:
+            # Update summary if row exists
+            cursor.execute('''
+                UPDATE cache SET summary = ? WHERE video_id = ?
+            ''', (summary, video_id))
+        else:
+            # Insert new row with empty JSON for response_data if row doesn't exist
+            cursor.execute('''
+                INSERT INTO cache (video_id, response_data, summary)
+                VALUES (?, ?, ?)
+            ''', (video_id, json.dumps({}), summary))
+        
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Database error caching summary for {video_id}: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+def get_cached_summary(video_id: str):
+    """Fetches the cached summary for a given video_id."""
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT summary FROM cache WHERE video_id = ?", (video_id,))
+        result = cursor.fetchone()
+        # Return the summary if it exists and is not None, otherwise return None
+        return result[0] if result and result[0] is not None else None
+    except sqlite3.Error as e:
+        print(f"Database error fetching summary for {video_id}: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
 def get_cached_transcript(video_id: str):
     """Fetches the cached transcript for a given video_id."""
     conn = None
@@ -179,6 +237,8 @@ def get_all(user: str = None):
     finally:
         if conn:
             conn.close()
+
+
 
 if __name__ == '__main__':
     # Example usage: Initialize DB when script is run directly
