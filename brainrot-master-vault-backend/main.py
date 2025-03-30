@@ -10,6 +10,7 @@ from moviepy import VideoFileClip # Corrected import
 from contextlib import asynccontextmanager # For lifespan management
 from youtube_tools.ytshorts_pull import get_youtube_video_details, get_youtube_video_id, parse_video_details, download_audio
 from youtube_tools.db_commands import init_db, get_all, get_cached_transcript, cache_transcript, get_cached_response, cache_response # Import cache functions
+from tools.summarize import summarize_text
 
 # Lifespan context manager to run init_db on startup
 @asynccontextmanager
