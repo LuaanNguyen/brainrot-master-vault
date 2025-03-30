@@ -160,7 +160,7 @@ const RecentlyAddedItem = ({ item }) => {
 
     // Default thumbnail for TikTok (you might need to adjust this)
     if (source === "tiktok") {
-      return "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&auto=format&fit=crop";
+      return "https://cdn.shopify.com/s/files/1/0070/7032/files/tiktok2_5381bbf7-d33d-4c31-9cbd-6dad2ef3b2ce.png?v=1734596856";
     }
 
     return "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&auto=format&fit=crop";
