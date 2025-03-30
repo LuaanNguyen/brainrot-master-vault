@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { useEffect } from "react";
+import { LinearGradient } from "expo-linear-gradient";
 
 // Get screen width for responsive sizing
 const { width } = Dimensions.get("window");
@@ -195,9 +196,16 @@ export default function PlaylistDetail() {
             {itemCount} clips • {totalDuration} total
           </Text>
 
-          {/* Play Button */}
-          <TouchableOpacity style={styles.playButton}>
-            <Text style={styles.playButtonText}>▶ Summarize</Text>
+          {/* Play Button with Linear Gradient */}
+          <TouchableOpacity>
+            <LinearGradient
+              colors={["#36d0ff", "#4576ff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.playButton}
+            >
+              <Text style={styles.playButtonText}>▶ Summarize</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -333,7 +341,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   playButton: {
-    backgroundColor: "#4A8FE7",
     borderRadius: 24,
     paddingVertical: 12,
     paddingHorizontal: 20,

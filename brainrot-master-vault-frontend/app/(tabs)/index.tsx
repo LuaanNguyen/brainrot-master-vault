@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useRefresh } from "../../context/RefreshContext";
+import { LinearGradient } from "expo-linear-gradient"; // Add this import
 
 // Filter component
 const FilterTabs = ({ activeTab, setActiveTab }) => {
@@ -26,18 +27,22 @@ const FilterTabs = ({ activeTab, setActiveTab }) => {
           key={tab}
           style={[
             styles.filterTab,
-            activeTab === tab && styles.activeFilterTab,
+            // Remove the activeFilterTab style here since we'll use LinearGradient instead
           ]}
           onPress={() => setActiveTab(tab)}
         >
-          <Text
-            style={[
-              styles.filterText,
-              activeTab === tab && styles.activeFilterText,
-            ]}
-          >
-            {tab}
-          </Text>
+          {activeTab === tab ? (
+            <LinearGradient
+              colors={["#36d0ff", "#4576ff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.activeFilterTabGradient}
+            >
+              <Text style={styles.activeFilterText}>{tab}</Text>
+            </LinearGradient>
+          ) : (
+            <Text style={styles.filterText}>{tab}</Text>
+          )}
         </TouchableOpacity>
       ))}
     </View>
@@ -459,22 +464,27 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   filterTab: {
+    marginRight: 6,
+    backgroundColor: "#262626", // Only for inactive tabs
+    borderRadius: 16,
+    overflow: "hidden", // Important for the gradient to stay within rounded corners
+  },
+  activeFilterTabGradient: {
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    marginRight: 6,
-    backgroundColor: "#262626", // Slightly lighter gray
-  },
-  activeFilterTab: {
-    backgroundColor: "#2D5D8E", // Medium blue for active tab
   },
   filterText: {
     color: "#CCCCCC", // Light gray
     fontSize: 12,
     fontWeight: "500",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
   activeFilterText: {
     color: "#FFFFFF", // White text for active tab
+    fontSize: 12,
+    fontWeight: "500",
   },
   recentGrid: {
     flexDirection: "row",

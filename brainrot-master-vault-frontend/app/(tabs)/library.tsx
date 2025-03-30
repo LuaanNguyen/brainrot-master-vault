@@ -15,6 +15,7 @@ import { Plus } from "lucide-react-native";
 import { useState, useEffect } from "react";
 import { useRefresh } from "../../context/RefreshContext";
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 
 const LibraryScreen = () => {
   const router = useRouter();
@@ -359,43 +360,68 @@ const LibraryScreen = () => {
           style={[
             styles.filterButton,
             {
-              backgroundColor:
-                activeTab === "categories" ? colors.primary : colors.card,
               borderColor:
                 activeTab === "categories" ? "transparent" : colors.border,
+              overflow: "hidden", // To keep gradient within border radius
             },
           ]}
           onPress={() => setActiveTab("categories")}
         >
-          <Text
-            style={[
-              styles.filterButtonText,
-              { color: activeTab === "categories" ? "white" : colors.text },
-            ]}
-          >
-            Categories
-          </Text>
+          {activeTab === "categories" ? (
+            <LinearGradient
+              colors={["#36d0ff", "#4576ff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.activeFilterGradient}
+            >
+              <Text style={styles.activeFilterText}>Categories</Text>
+            </LinearGradient>
+          ) : (
+            <View
+              style={[
+                styles.inactiveFilterButton,
+                { backgroundColor: colors.card },
+              ]}
+            >
+              <Text style={[styles.filterButtonText, { color: colors.text }]}>
+                Categories
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[
             styles.filterButton,
             {
-              backgroundColor:
-                activeTab === "recent" ? colors.primary : colors.card,
               borderColor:
                 activeTab === "recent" ? "transparent" : colors.border,
+              overflow: "hidden", // To keep gradient within border radius
             },
           ]}
           onPress={() => setActiveTab("recent")}
         >
-          <Text
-            style={[
-              styles.filterButtonText,
-              { color: activeTab === "recent" ? "white" : colors.text },
-            ]}
-          >
-            Recently Added
-          </Text>
+          {activeTab === "recent" ? (
+            <LinearGradient
+              colors={["#36d0ff", "#4576ff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.activeFilterGradient}
+            >
+              <Text style={styles.activeFilterText}>Recently Added</Text>
+            </LinearGradient>
+          ) : (
+            <View
+              style={[
+                styles.inactiveFilterButton,
+                { backgroundColor: colors.card },
+              ]}
+            >
+              <Text style={[styles.filterButtonText, { color: colors.text }]}>
+                Recently Added
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -453,12 +479,22 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderRadius: 20,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "transparent",
+  },
+  activeFilterGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  activeFilterText: {
+    color: "white",
+    fontWeight: "500",
+  },
+  inactiveFilterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   filterButtonText: {
     fontWeight: "500",

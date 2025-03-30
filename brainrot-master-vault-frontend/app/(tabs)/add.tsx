@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,13 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Animated,
+  Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "lucide-react-native";
 import { useRefresh } from "../../context/RefreshContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 // YouTube and TikTok logo URLs for fallback thumbnails
 const YOUTUBE_LOGO_URL =
@@ -25,6 +28,57 @@ export default function AddVideoScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const { triggerRefresh } = useRefresh();
+
+  // Animation value for the gradient wave effect
+  const dotsAnimation = useRef(new Animated.Value(0)).current;
+
+  // Add a new animated value for the button pulse effect
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Start animation when loading state changes
+  useEffect(() => {
+    if (isLoading) {
+      // Create a pulsing animation for the button
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 700,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 700,
+            easing: Easing.in(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Animate the dots for the text
+      Animated.loop(
+        Animated.timing(dotsAnimation, {
+          toValue: 3,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: false,
+        })
+      ).start();
+    } else {
+      // Stop animations when not loading
+      pulseAnim.setValue(1);
+      pulseAnim.stopAnimation();
+      dotsAnimation.stopAnimation();
+    }
+  }, [isLoading]);
+
+  // Function to render the animated dots
+  const renderDots = () => {
+    // Round to nearest integer for dot display
+    const dotsCount = Math.floor(dotsAnimation._value);
+    return ".".repeat(dotsCount);
+  };
 
   useEffect(() => {
     fetch("https://brainrotapi.codestacx.com/")
@@ -171,23 +225,47 @@ export default function AddVideoScreen() {
 
         <Pressable
           style={[
-            styles.button,
+            styles.buttonContainer,
             (!videoUrl || isLoading) && styles.buttonDisabled,
           ]}
           onPress={handleAddVideo}
           disabled={!videoUrl || isLoading}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Text
+          {!videoUrl ? (
+            // Inactive button state - no gradient
+            <View style={styles.buttonInner}>
+              <Text style={styles.buttonTextDisabled}>Process Video</Text>
+            </View>
+          ) : isLoading ? (
+            // Loading state with pulse animation and animated dots
+            <Animated.View
               style={[
-                styles.buttonText,
-                !videoUrl && styles.buttonTextDisabled,
+                styles.gradientContainer,
+                { transform: [{ scale: pulseAnim }] },
               ]}
             >
-              Process Video
-            </Text>
+              <LinearGradient
+                colors={["#36d0ff", "#4576ff"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonText}>
+                  Processing
+                  <Animated.Text>{renderDots()}</Animated.Text>
+                </Text>
+              </LinearGradient>
+            </Animated.View>
+          ) : (
+            // Active button state with static gradient
+            <LinearGradient
+              colors={["#36d0ff", "#4576ff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.buttonGradient}
+            >
+              <Text style={styles.buttonText}>Process Video</Text>
+            </LinearGradient>
           )}
         </Pressable>
       </View>
@@ -238,16 +316,27 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     color: "#FFFFFF",
   },
-  button: {
-    backgroundColor: "#3B82F6",
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+  buttonContainer: {
     width: "100%",
-    alignItems: "center",
+    borderRadius: 12,
+    overflow: "hidden", // Important for the gradient to stay within rounded corners
   },
   buttonDisabled: {
+    opacity: 0.7,
+  },
+  buttonInner: {
     backgroundColor: "#374151",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: "center",
+  },
+  gradientContainer: {
+    width: "100%",
+  },
+  buttonGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: "center",
   },
   buttonText: {
     color: "#FFFFFF",
@@ -257,6 +346,9 @@ const styles = StyleSheet.create({
   },
   buttonTextDisabled: {
     color: "#6B7280",
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    textAlign: "center",
   },
   successContainer: {
     backgroundColor: "#065F46",
