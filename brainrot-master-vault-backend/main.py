@@ -77,6 +77,14 @@ async def get_youtube(video_url: str):
     else:
         print(f"Audio file not found at {mp3_file_path}, skipping transcription.")
         parsed_details['transcription'] = None # Or handle as appropriate
+    # Summarize the video using the Title, Description, and Transcript
+    if parsed_details['transcription']:
+        summary = summarize_text('Title:' + parsed_details['title'] + 
+                                 'Transcript:' + parsed_details['transcription'] +
+                                 'Description:' + parsed_details['description'])
+        parsed_details['summary'] = summary
+    else:
+        parsed_details['summary'] = None
 
     return parsed_details
 
