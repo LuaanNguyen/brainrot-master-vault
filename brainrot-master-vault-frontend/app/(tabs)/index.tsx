@@ -93,27 +93,116 @@ const RecentlyAddedItem = ({ item }) => {
     if (diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
   };
+
+  // Handle different video sources and formats
+  const videoId = item.video_id;
+  const source = item.source || "youtube";
+
+  // Extract title from response_data for YouTube videos correctly
+  const title =
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.title) ||
+    (item.response_data && item.response_data.title) ||
+    item.title ||
+    "Untitled";
+
+  // Extract channel title
+  const channelTitle =
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.channelTitle) ||
+    (item.response_data && item.response_data.channelTitle) ||
+    item.channelTitle ||
+    "Unknown";
+
+  // Extract published date
+  const publishedDate =
+    item.publishedAt ||
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.publishedAt) ||
+    (item.response_data && item.response_data.publishedAt);
+
+  // Create appropriate thumbnails based on source
+  const getThumbnailUrl = () => {
+    // Check for thumbnail in response_data items first
+    if (
+      item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.thumbnails &&
+      item.response_data.items[0].snippet.thumbnails.medium
+    ) {
+      return item.response_data.items[0].snippet.thumbnails.medium.url;
+    }
+
+    // Then check other locations
+    if (
+      item.thumbnails ||
+      (item.response_data && item.response_data.thumbnail)
+    ) {
+      return item.thumbnails || item.response_data.thumbnail;
+    }
+
+    // Default thumbnail for YouTube
+    if (source === "youtube") {
+      return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    }
+
+    // Default thumbnail for TikTok (you might need to adjust this)
+    if (source === "tiktok") {
+      return "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&auto=format&fit=crop";
+    }
+
+    return "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&auto=format&fit=crop";
+  };
+
+  // Handle video URL based on source
+  const handleVideoPress = () => {
+    let url = "";
+    if (source === "youtube") {
+      url = `https://youtube.com/watch?v=${videoId}`;
+    } else if (source === "tiktok") {
+      url = `https://tiktok.com/@username/video/${videoId}`;
+    }
+
+    if (url) {
+      Linking.openURL(url);
+    }
+  };
+
   return (
     <TouchableOpacity
       style={styles.recentlyAddedItem}
-      onPress={() => Linking.openURL(`https://youtube.com/shorts/${item.id}`)}
+      onPress={handleVideoPress}
     >
       <View style={styles.videoThumbnailContainer}>
         <Image
-          source={{ uri: item.thumbnails }}
+          source={{ uri: getThumbnailUrl() }}
           style={styles.recentlyAddedCover}
         />
-        <View style={styles.durationBadge}>
-          <Text style={styles.durationText}>
-            {formatDate(item.publishedAt)}
-          </Text>
+        <View style={styles.sourceBadge}>
+          <Text style={styles.sourceText}>{source}</Text>
         </View>
+        {publishedDate && (
+          <View style={styles.durationBadge}>
+            <Text style={styles.durationText}>{formatDate(publishedDate)}</Text>
+          </View>
+        )}
       </View>
       <View style={styles.recentlyAddedInfo}>
         <Text style={styles.recentlyAddedTitle} numberOfLines={2}>
-          {item.title}
+          {title}
         </Text>
-        <Text style={styles.recentlyAddedSubtitle}>{item.channelTitle}</Text>
+        <Text style={styles.recentlyAddedSubtitle}>{channelTitle}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -128,6 +217,7 @@ const Home = () => {
     fetch("https://brainrotapi.codestacx.com/home")
       .then((response) => response.json())
       .then((data) => {
+        console.log(data.videos);
         setRecentItems(data.videos);
       });
   }, []);

@@ -128,36 +128,119 @@ const LibraryScreen = () => {
     return date.toLocaleDateString();
   };
 
-  const renderVideoItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.recentlyAddedItem}
-      onPress={() => Linking.openURL(`https://youtube.com/shorts/${item.id}`)}
-    >
-      <View style={styles.videoThumbnailContainer}>
-        <Image
-          source={{
-            uri: item.thumbnails || "https://via.placeholder.com/120x70",
-          }}
-          style={styles.recentlyAddedCover}
-          resizeMode="cover"
-        />
-        <View style={styles.durationBadge}>
-          <Text style={styles.durationText}>
-            {formatDate(item.publishedAt)}
-          </Text>
+  const renderVideoItem = ({ item }) => {
+    // Extract video details from nested response data
+    const videoId = item.video_id || item.id;
+    const source = item.source || "youtube";
+
+    // Extract title from response_data for YouTube videos correctly
+    const title =
+      (item.response_data &&
+        item.response_data.items &&
+        item.response_data.items[0] &&
+        item.response_data.items[0].snippet &&
+        item.response_data.items[0].snippet.title) ||
+      (item.response_data && item.response_data.title) ||
+      item.title ||
+      "Untitled";
+
+    // Extract channel title
+    const channelTitle =
+      (item.response_data &&
+        item.response_data.items &&
+        item.response_data.items[0] &&
+        item.response_data.items[0].snippet &&
+        item.response_data.items[0].snippet.channelTitle) ||
+      (item.response_data && item.response_data.channelTitle) ||
+      item.channelTitle ||
+      "Unknown";
+
+    // Extract published date
+    const publishedDate =
+      item.publishedAt ||
+      (item.response_data &&
+        item.response_data.items &&
+        item.response_data.items[0] &&
+        item.response_data.items[0].snippet &&
+        item.response_data.items[0].snippet.publishedAt) ||
+      (item.response_data && item.response_data.publishedAt);
+
+    // Get appropriate thumbnail
+    const getThumbnailUrl = () => {
+      // Check for thumbnail in response_data items first
+      if (
+        item.response_data &&
+        item.response_data.items &&
+        item.response_data.items[0] &&
+        item.response_data.items[0].snippet &&
+        item.response_data.items[0].snippet.thumbnails &&
+        item.response_data.items[0].snippet.thumbnails.medium
+      ) {
+        return item.response_data.items[0].snippet.thumbnails.medium.url;
+      }
+
+      // Then check other locations
+      if (
+        item.thumbnails ||
+        (item.response_data && item.response_data.thumbnail)
+      ) {
+        return item.thumbnails || item.response_data.thumbnail;
+      }
+
+      // Default thumbnail for YouTube
+      if (source === "youtube") {
+        return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      }
+
+      return "https://via.placeholder.com/120x70";
+    };
+
+    // Handle video URL generation
+    const getVideoUrl = () => {
+      if (source === "youtube") {
+        return `https://youtube.com/watch?v=${videoId}`;
+      } else if (source === "tiktok") {
+        return `https://tiktok.com/@username/video/${videoId}`;
+      }
+      return "";
+    };
+
+    return (
+      <TouchableOpacity
+        style={styles.recentlyAddedItem}
+        onPress={() => Linking.openURL(getVideoUrl())}
+      >
+        <View style={styles.videoThumbnailContainer}>
+          <Image
+            source={{ uri: getThumbnailUrl() }}
+            style={styles.recentlyAddedCover}
+            resizeMode="cover"
+          />
+          {source && (
+            <View style={styles.sourceBadge}>
+              <Text style={styles.sourceText}>{source}</Text>
+            </View>
+          )}
+          {publishedDate && (
+            <View style={styles.durationBadge}>
+              <Text style={styles.durationText}>
+                {formatDate(publishedDate)}
+              </Text>
+            </View>
+          )}
         </View>
-      </View>
-      <View style={styles.recentlyAddedInfo}>
-        <Text
-          style={[styles.recentlyAddedTitle, { color: colors.text }]}
-          numberOfLines={2}
-        >
-          {item.title}
-        </Text>
-        <Text style={styles.recentlyAddedSubtitle}>{item.channelTitle}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={styles.recentlyAddedInfo}>
+          <Text
+            style={[styles.recentlyAddedTitle, { color: colors.text }]}
+            numberOfLines={2}
+          >
+            {title}
+          </Text>
+          <Text style={styles.recentlyAddedSubtitle}>{channelTitle}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -301,7 +384,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // New styles for recently added items, matching the example
+  // Styles for recently added items
   recentlyAddedItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -321,6 +404,20 @@ const styles = StyleSheet.create({
   recentlyAddedCover: {
     width: "100%",
     height: "100%",
+  },
+  sourceBadge: {
+    position: "absolute",
+    left: 4,
+    top: 4,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  sourceText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "500",
   },
   durationBadge: {
     position: "absolute",

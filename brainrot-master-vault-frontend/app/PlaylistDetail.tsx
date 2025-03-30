@@ -27,30 +27,109 @@ const formatDate = (dateString) => {
 
 // Recently Added Item Component
 const RecentlyAddedItem = ({ item }) => {
+  // Extract video details from nested response data
+  const videoId = item.video_id || item.id;
+  const source = item.source || "youtube";
+
+  // Extract title from response_data for YouTube videos correctly
+  const title =
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.title) ||
+    (item.response_data && item.response_data.title) ||
+    item.title ||
+    "Untitled";
+
+  // Extract channel title
+  const channelTitle =
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.channelTitle) ||
+    (item.response_data && item.response_data.channelTitle) ||
+    item.channelTitle ||
+    "Unknown";
+
+  // Extract published date
+  const publishedDate =
+    item.publishedAt ||
+    (item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.publishedAt) ||
+    (item.response_data && item.response_data.publishedAt);
+
+  // Get appropriate thumbnail
+  const getThumbnailUrl = () => {
+    // Check for thumbnail in response_data items first
+    if (
+      item.response_data &&
+      item.response_data.items &&
+      item.response_data.items[0] &&
+      item.response_data.items[0].snippet &&
+      item.response_data.items[0].snippet.thumbnails &&
+      item.response_data.items[0].snippet.thumbnails.medium
+    ) {
+      return item.response_data.items[0].snippet.thumbnails.medium.url;
+    }
+
+    // Then check other locations
+    if (
+      item.thumbnails ||
+      (item.response_data && item.response_data.thumbnail)
+    ) {
+      return item.thumbnails || item.response_data.thumbnail;
+    }
+
+    // Default thumbnail for YouTube
+    if (source === "youtube") {
+      return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    }
+
+    return "https://via.placeholder.com/120x70";
+  };
+
+  // Handle video URL generation
+  const getVideoUrl = () => {
+    if (source === "youtube") {
+      return `https://youtube.com/watch?v=${videoId}`;
+    } else if (source === "tiktok") {
+      return `https://tiktok.com/@username/video/${videoId}`;
+    }
+    return "";
+  };
+
   return (
     <TouchableOpacity
       style={styles.recentlyAddedItem}
-      onPress={() => Linking.openURL(`https://youtube.com/shorts/${item.id}`)}
+      onPress={() => Linking.openURL(getVideoUrl())}
     >
       <View style={styles.videoThumbnailContainer}>
         <Image
-          source={{
-            uri: item.thumbnails || "https://via.placeholder.com/120x70",
-          }}
+          source={{ uri: getThumbnailUrl() }}
           style={styles.recentlyAddedCover}
           resizeMode="cover"
         />
-        <View style={styles.durationBadge}>
-          <Text style={styles.durationText}>
-            {formatDate(item.publishedAt)}
-          </Text>
-        </View>
+        {source && (
+          <View style={styles.sourceBadge}>
+            <Text style={styles.sourceText}>{source}</Text>
+          </View>
+        )}
+        {publishedDate && (
+          <View style={styles.durationBadge}>
+            <Text style={styles.durationText}>{formatDate(publishedDate)}</Text>
+          </View>
+        )}
       </View>
       <View style={styles.recentlyAddedInfo}>
         <Text style={styles.recentlyAddedTitle} numberOfLines={2}>
-          {item.title}
+          {title}
         </Text>
-        <Text style={styles.recentlyAddedSubtitle}>{item.channelTitle}</Text>
+        <Text style={styles.recentlyAddedSubtitle}>{channelTitle}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -116,7 +195,10 @@ export default function PlaylistDetail() {
         <View style={styles.recentlyAddedList}>
           {videos.length > 0 ? (
             videos.map((item) => (
-              <RecentlyAddedItem key={item.id} item={item} />
+              <RecentlyAddedItem
+                key={item.id || item.video_id || Math.random().toString()}
+                item={item}
+              />
             ))
           ) : (
             <Text style={styles.placeholder}>Loading videos...</Text>
@@ -168,6 +250,20 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  sourceBadge: {
+    position: "absolute",
+    left: 4,
+    top: 4,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  sourceText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "500",
+  },
   durationBadge: {
     position: "absolute",
     right: 4,
@@ -199,7 +295,6 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
   recentlyAddedList: {
-    paddingHorizontal: 16,
     paddingBottom: 24,
   },
   recentlyAddedItem: {
