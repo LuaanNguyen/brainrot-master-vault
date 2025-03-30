@@ -39,7 +39,7 @@ def get_first_five_videos():
     all_videos = get_all()
     
     # Take only the first 5 videos
-    first_five = all_videos[:5]
+    first_five = all_videos[5:11]
     
     print(f"Found {len(all_videos)} total videos in cache. Displaying first 5:")
     print("-" * 80)
@@ -90,7 +90,7 @@ def get_first_five_from_api():
             videos = data.get('videos', [])
             
             # Take only the first 5 videos if available
-            first_five = videos[:5] if isinstance(videos, list) else []
+            first_five = videos 
          
             print(f"Retrieved {len(first_five)} videos from the API:")
             print("-" * 80)
