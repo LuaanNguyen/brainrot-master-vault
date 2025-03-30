@@ -12,7 +12,6 @@ export default function ForceGraphComponent({ onNodeClick }) {
   const [infoExpanded, setInfoExpanded] = useState(false);
 
   const handleNodeClick = (node) => {
-    setSelectedCategory(node.id);
     if (onNodeClick) onNodeClick(node);
   };
 
@@ -222,9 +221,9 @@ export default function ForceGraphComponent({ onNodeClick }) {
               </svg>
             </button>
 
-            <h2 className="text-xl font-semibold mb-4 pr-6">Video Info</h2>
+            <h2 className="text-xl font-semibold mb-4 pr-6">Graph Info</h2>
             <p className="text-muted-foreground text-sm mb-6">
-              Select a node to see related videos and details.
+              Click on nodes to explore the knowledge graph.
             </p>
             <div className="space-y-4">
               <div className="p-4 border rounded-lg">
@@ -268,92 +267,6 @@ export default function ForceGraphComponent({ onNodeClick }) {
           </button>
         )}
       </div>
-
-      {selectedCategory && (
-        <div className="p-4 bg-white shadow-md rounded-md mt-4 relative">
-          <button
-            onClick={handleClosePanel}
-            className="absolute right-4 top-4 text-gray-500 hover:text-gray-800"
-            aria-label="Close panel"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-
-          <h2 className="text-xl font-bold mb-3 capitalize">
-            {selectedCategory} Videos
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {categoryVideos[selectedCategory] ? (
-              categoryVideos[selectedCategory].map((video, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-50 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
-                >
-                  <div className="relative cursor-pointer group">
-                    <img
-                      src={video.thumbnail}
-                      alt={video.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs">
-                      {video.duration}
-                    </div>
-                    <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
-                      {video.platform}
-                    </div>
-
-                    {/* Play button overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <div className="bg-black bg-opacity-50 rounded-full p-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="32"
-                          height="32"
-                          viewBox="0 0 24 24"
-                          fill="white"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <h3 className="font-medium text-sm">{video.title}</h3>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-3 text-center py-4">
-                No videos available for this category.
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6 text-center">
-            <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors duration-200">
-              View All {selectedCategory} Videos
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

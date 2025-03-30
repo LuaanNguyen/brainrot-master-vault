@@ -29,26 +29,43 @@ export default function Sidebar({ toggleFullscreen }: SidebarProps) {
   const [activeItem, setActiveItem] = useState<string>("graph");
 
   const menuItems = [
-    { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { id: "graph", icon: ChartNetwork, label: "Knowledge Graph" },
-    { id: "explore", icon: Compass, label: "Explore" },
-    { id: "collections", icon: Folder, label: "Collections" },
-    { id: "saved", icon: Bookmark, label: "Saved" },
-    { id: "history", icon: Clock, label: "History" },
+    {
+      id: "dashboard",
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      disabled: true,
+    },
+    {
+      id: "graph",
+      icon: ChartNetwork,
+      label: "Knowledge Graph",
+      disabled: false,
+    },
+    { id: "explore", icon: Compass, label: "Explore", disabled: true },
+    { id: "collections", icon: Folder, label: "Collections", disabled: true },
+    { id: "saved", icon: Bookmark, label: "Saved", disabled: true },
+    { id: "history", icon: Clock, label: "History", disabled: true },
   ];
 
   const bottomItems = [
-    { id: "community", icon: Users, label: "Community" },
-    { id: "mobile", icon: Smartphone, label: "Mobile App" },
-    { id: "home", icon: Home, label: "Home" },
+    { id: "community", icon: Users, label: "Community", disabled: true },
+    { id: "mobile", icon: Smartphone, label: "Mobile App", disabled: true },
+    {
+      id: "home",
+      icon: Home,
+      label: "Home",
+      disabled: false,
+      href: "/",
+    },
     {
       id: "fullscreen",
       icon: Maximize,
       label: "Fullscreen",
       action: toggleFullscreen,
+      disabled: false,
     },
-    { id: "settings", icon: Settings, label: "Settings" },
-    { id: "help", icon: HelpCircle, label: "Help & Support" },
+    { id: "settings", icon: Settings, label: "Settings", disabled: true },
+    { id: "help", icon: HelpCircle, label: "Help & Support", disabled: true },
   ];
 
   return (
@@ -80,9 +97,12 @@ export default function Sidebar({ toggleFullscreen }: SidebarProps) {
                   "justify-start relative rounded-lg w-full h-10 px-3",
                   isActive
                     ? "bg-blue-50 text-blue-600"
-                    : "hover:bg-gray-100 text-gray-600"
+                    : "hover:bg-gray-100 text-gray-600",
+                  item.disabled &&
+                    "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-600"
                 )}
-                onClick={() => setActiveItem(item.id)}
+                onClick={() => !item.disabled && setActiveItem(item.id)}
+                disabled={item.disabled}
               >
                 {isActive && (
                   <motion.div
@@ -117,15 +137,19 @@ export default function Sidebar({ toggleFullscreen }: SidebarProps) {
                 "justify-start relative rounded-lg w-full h-10 px-3",
                 isActive
                   ? "bg-blue-50 text-blue-600"
-                  : "hover:bg-gray-100 text-gray-600"
+                  : "hover:bg-gray-100 text-gray-600",
+                item.disabled &&
+                  "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-600"
               )}
               onClick={() => {
+                if (item.disabled) return;
                 if (item.action) {
                   item.action();
-                } else {
+                } else if (!item.href) {
                   setActiveItem(item.id);
                 }
               }}
+              disabled={item.disabled}
             >
               {isActive && (
                 <motion.div
@@ -142,7 +166,7 @@ export default function Sidebar({ toggleFullscreen }: SidebarProps) {
               </span>
               {item.id === "fullscreen" ? null : (
                 <span className="sr-only">
-                  <Link href="/">Go to {item.label}</Link>
+                  <Link href={item.href || "/"}>Go to {item.label}</Link>
                 </span>
               )}
             </Button>
