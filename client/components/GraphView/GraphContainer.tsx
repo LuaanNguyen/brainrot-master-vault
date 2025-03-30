@@ -32,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChartNetwork, Smartphone, Ellipsis } from "lucide-react";
 import Link from "next/link";
+import ProfileSection from "../ProfileSection";
 
 // Import ForceGraphComponent with no SSR to prevent hydration issues
 const ForceGraphComponent = dynamic(() => import("./ForceGraphComponent"), {
@@ -305,6 +306,8 @@ export default function GraphContainer() {
               minSize={20}
               className="flex flex-col h-full"
             >
+              {/* Profile Section */}
+              <ProfileSection />
               <ScrollArea className="h-full bg-gray-50">
                 <div className="p-6">
                   {selectedCategory ? (

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import ForceGraph from "force-graph";
 import * as d3 from "d3";
 import { sampleData, categoryVideos } from "../../data/graphData";
+import ProfileSection from "../ProfileSection";
 
 export default function ForceGraphComponent({ onNodeClick }) {
   const containerRef = useRef(null);
@@ -221,48 +222,54 @@ export default function ForceGraphComponent({ onNodeClick }) {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {categoryVideos[selectedCategory].map((video, index) => (
-              <div
-                key={index}
-                className="bg-gray-50 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
-              >
-                <div className="relative cursor-pointer group">
-                  <img
-                    src={video.thumbnail}
-                    alt={video.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs">
-                    {video.duration}
-                  </div>
-                  <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
-                    {video.platform}
-                  </div>
+            {categoryVideos[selectedCategory] ? (
+              categoryVideos[selectedCategory].map((video, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-50 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+                >
+                  <div className="relative cursor-pointer group">
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs">
+                      {video.duration}
+                    </div>
+                    <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
+                      {video.platform}
+                    </div>
 
-                  {/* Play button overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <div className="bg-black bg-opacity-50 rounded-full p-3">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="32"
-                        height="32"
-                        viewBox="0 0 24 24"
-                        fill="white"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
+                    {/* Play button overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="bg-black bg-opacity-50 rounded-full p-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="32"
+                          height="32"
+                          viewBox="0 0 24 24"
+                          fill="white"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                      </div>
                     </div>
                   </div>
+                  <div className="p-3">
+                    <h3 className="font-medium text-sm">{video.title}</h3>
+                  </div>
                 </div>
-                <div className="p-3">
-                  <h3 className="font-medium text-sm">{video.title}</h3>
-                </div>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-4">
+                No videos available for this category.
               </div>
-            ))}
+            )}
           </div>
 
           <div className="mt-6 text-center">
