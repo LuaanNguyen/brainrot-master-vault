@@ -1,17 +1,27 @@
 # 🧠 BrainRot Master Vault
+
 ### Transform digital distraction into productive learning through AI-powered podcast experiences
+
 ![Demo.png](/client/public/demo.png)
 
-### 🌐 Live Demo
+### 🌐 Live Demo & Resources
 
-Visit: [brainrotmastervaultovercooked.tech](https://brainrotmastervaultovercooked.tech)
+- 🎯 [Live Website](https://brainrotmastervaultovercooked.tech)
+- 🏆 [Devpost Project](https://devpost.com/software/master-vault?ref_content=user-portfolio&ref_feature=in_progress)
+- 🎥 [Demo Video](https://youtu.be/02_bM6vEvyU)
 
-### 💌 Devpost
+## 📊 The Digital Attention Crisis
 
-Visit: [Devpost](https://devpost.com/)
+In today's digital landscape, we face an unprecedented "attention crisis":
 
+- Users spend ~1.5 hours daily on TikTok alone
+- Average of 19 daily app opens
+- 550+ hours annually consumed by short-form content
+- 48% reduction in sustained focus
+- 32% increase in anxiety and depression symptoms
+- 27% drop in task completion rates
 
-![App.png](/client/public/app.png)
+In reponse to this, BrainRot Master Vault aims revolutionize digital content consumption through intentional passive learning.
 
 ## 🛠️ Technical Stack
 
@@ -50,6 +60,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Nga Vu - https://www.linkedin.com/in/nga-vu-269626226/
 - Smit Devrukhkar - https://www.linkedin.com/in/smitsd/
 - Andy Le - https://www.linkedin.com/in/4ndyle/
+
 ---
 
 Built with ❤️ at Princeton Hackathon 2024
