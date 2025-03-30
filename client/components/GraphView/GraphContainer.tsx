@@ -309,61 +309,125 @@ export default function GraphContainer() {
               {/* Profile Section */}
               <ProfileSection />
               <ScrollArea className="h-full bg-gray-50">
-                <div className="p-6">
+                <div className="p-2">
                   {selectedCategory ? (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
+                      className="w-full h-full"
                     >
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle>
-                            {CATEGORIES.find((c) => c.id === selectedCategory)
-                              ?.label || "Category"}
-                          </CardTitle>
+                      <Card className="h-full flex flex-col border-none shadow-sm bg-white/95 backdrop-blur-sm">
+                        <CardHeader className="pb-2 flex-shrink-0 px-4 pt-4 flex flex-row items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white">
+                              {CATEGORIES.find(
+                                (c) => c.id === selectedCategory
+                              )?.label?.charAt(0) || "C"}
+                            </div>
+                            <CardTitle className="text-base font-medium">
+                              {CATEGORIES.find((c) => c.id === selectedCategory)
+                                ?.label || "Category"}
+                            </CardTitle>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {selectedVideos.length} videos
+                          </div>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                          {selectedVideos.length > 0 ? (
-                            selectedVideos.map((video) => (
-                              <motion.div
-                                key={video.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 }}
-                                className="flex flex-col space-y-2 border rounded-lg p-3"
-                              >
-                                <div className="aspect-video overflow-hidden rounded-md">
-                                  <img
-                                    src={video.thumbnails}
-                                    alt={video.title}
-                                    className="object-cover w-full h-full"
-                                  />
+
+                        <div className="px-4 pb-2">
+                          <div className="w-full h-px bg-gray-100"></div>
+                        </div>
+
+                        <CardContent className="flex-grow overflow-auto px-4 py-2">
+                          <div className="space-y-2 w-full">
+                            {selectedVideos.length > 0 ? (
+                              selectedVideos.map((video) => (
+                                <motion.div
+                                  key={video.id}
+                                  initial={{ opacity: 0, x: 20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.1 }}
+                                  className="flex items-center rounded-lg p-2 gap-3 hover:bg-gray-50 transition-colors duration-200 w-full group cursor-pointer"
+                                >
+                                  {/* Thumbnail with Spotify-like play button on hover */}
+                                  <div className="w-[30%] max-w-24 min-w-16 aspect-video flex-shrink-0 rounded-md overflow-hidden relative">
+                                    <img
+                                      src={video.thumbnails}
+                                      alt={video.title}
+                                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                                    />
+
+                                    {/* Spotify-like play button that appears on hover */}
+                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                                      <div className="bg-primary rounded-full w-8 h-8 flex items-center justify-center transform translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="white"
+                                          stroke="white"
+                                          strokeWidth="0"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Content area that flexes with available space */}
+                                  <div className="flex flex-col justify-between flex-grow min-w-0 h-full py-0.5">
+                                    <h3 className="font-medium text-sm leading-tight line-clamp-1 group-hover:text-black transition-colors duration-200">
+                                      {video.title}
+                                    </h3>
+
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-xs text-muted-foreground truncate">
+                                        {video.channelTitle}
+                                      </span>
+                                      <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0"></span>
+                                      <span className="text-xs text-muted-foreground flex-shrink-0 hidden xs:block">
+                                        {new Date(
+                                          video.publishedAt
+                                        ).toLocaleDateString(undefined, {
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))
+                            ) : (
+                              <div className="flex flex-col items-center justify-center h-40 text-center">
+                                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-400"
+                                  >
+                                    <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12s4.48 10 10 10 10-4.48 10-10z"></path>
+                                    <path d="M12 16v-4"></path>
+                                    <path d="M12 8h.01"></path>
+                                  </svg>
                                 </div>
-                                <h3 className="font-medium leading-tight">
-                                  {video.title}
-                                </h3>
-                                <p className="text-xs text-muted-foreground line-clamp-2">
-                                  {video.description}
+                                <p className="text-muted-foreground text-sm">
+                                  No videos found for this category.
                                 </p>
-                                <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                  <span>{video.channelTitle}</span>
-                                  <span>
-                                    {new Date(
-                                      video.publishedAt
-                                    ).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <Button variant="outline" size="sm">
-                                  Watch Video
-                                </Button>
-                              </motion.div>
-                            ))
-                          ) : (
-                            <p className="text-muted-foreground">
-                              No videos found for this category.
-                            </p>
-                          )}
+                              </div>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     </motion.div>
