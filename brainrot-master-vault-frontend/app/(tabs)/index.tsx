@@ -303,13 +303,13 @@ const Home = () => {
   const categories = [
     {
       id: "1",
-      title: "Tech & AI Trends",
+      title: "Tech News",
       imageUrl:
         "https://images.unsplash.com/photo-1557838923-2985c318be48?w=800&auto=format&fit=crop",
     },
     {
       id: "2",
-      title: "Motivation & Self-Improvement",
+      title: "Natural Disasters",
       imageUrl:
         "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop",
       showPlayButton: false,
@@ -330,14 +330,14 @@ const Home = () => {
     },
     {
       id: "5",
-      title: "Viral Trends & Challenges",
+      title: "Food & Cooking Trends",
       imageUrl:
         "https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=800&auto=format&fit=crop",
       showPlayButton: false,
     },
     {
       id: "6",
-      title: "Science & Space Discoveries",
+      title: "Crime",
       imageUrl:
         "https://images.unsplash.com/photo-1447433865958-f402f562b843?w=800&auto=format&fit=crop",
     },
