@@ -157,7 +157,6 @@ async def get_tiktok(tiktok_url: str):
 
     try:
         # Download video data and video file
-        pyk.specify_browser('chrome')
         pyk.save_tiktok(tiktok_url, True, temp_csv_file) # Specify browser
         print(f"TikTok video and data downloaded for {video_id}.")
 
