@@ -22,8 +22,17 @@ export async function fetchVideoMetadata(
       videoUrl
     )}`;
 
+    console.log(`Fetching metadata from: ${apiUrl}`);
+
     // Make request
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      mode: "cors",
+    });
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
