@@ -1,12 +1,4 @@
 [phases.setup]
-nixPkgs = ["...", "ffmpeg", "rust", "cargo"]
-
-[phases.build]
-# Ensure Rust is available for building Python extensions
-cmds = ["cargo build --release"]
-
-[variables]
-# Specify the Rust version if needed
-NIXPACKS_RUST_VERSION = "stable"
+nixPkgs = ["...", "ffmpeg", "rust-overlay"]
 
 
