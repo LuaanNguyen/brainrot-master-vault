@@ -189,7 +189,7 @@ export default function TopBar({
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             onClick={onExport}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-gradient-to-tr from-blue-500 to-cyan-400 text-white shadow-sm hover:shadow-md hover:opacity-90 transition-all"
+            className="flex cursor-not-allowed items-center gap-2 px-4 py-1.5 rounded-lg bg-gradient-to-tr from-blue-500 to-cyan-400 text-white shadow-sm hover:shadow-md hover:opacity-90 transition-all"
           >
             <Download size={16} />
             <span className="font-medium text-sm">Export</span>

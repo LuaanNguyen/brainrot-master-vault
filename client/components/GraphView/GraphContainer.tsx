@@ -90,7 +90,7 @@ export default function GraphContainer() {
 
   return (
     <div
-      className={`bg-background rounded-2xl border border-blue-100 overflow-hidden shadow-[0_20px_50px_rgba(8,112,240,0.2)] ${
+      className={`bg-background rounded-2xl border border-gray-100 overflow-hidden shadow-[0_20px_50px_rgba(8,112,240,0.2)] ${
         isFullscreen ? "fixed inset-0 z-50 " : " h-[calc(100vh-6rem)]"
       }`}
     >
