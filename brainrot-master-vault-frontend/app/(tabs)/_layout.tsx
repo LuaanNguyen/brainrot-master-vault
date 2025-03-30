@@ -21,7 +21,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
-      
       <Tabs.Screen
         name="add"
         options={{
