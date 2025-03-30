@@ -1,4 +1,6 @@
-# 🧠 BrainRot Master Vault: Transform digital distraction into productive learning through AI-powered podcast experiences.
+# 🧠 BrainRot Master Vault
+### Transform digital distraction into productive learning through AI-powered podcast experiences
+![Demo.png](/client/public/demo.png)
 
 ### 🌐 Live Demo
 
@@ -6,9 +8,8 @@ Visit: [brainrotmastervaultovercooked.tech](https://brainrotmastervaultovercooke
 
 ### 💌 Devpost
 
-Visit:
+Visit: [Devpost](https://devpost.com/)
 
-![Demo.png](/client/public/demo.png)
 
 ![App.png](/client/public/app.png)
 
@@ -43,6 +44,12 @@ Visit:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## 👥 Team
+
+- Luan Nguyen - https://www.linkedin.com/in/luanthiennguyen/
+- Nga Vu - https://www.linkedin.com/in/nga-vu-269626226/
+- Smit Devrukhkar - https://www.linkedin.com/in/smitsd/
+- Andy Le - https://www.linkedin.com/in/4ndyle/
 ---
 
 Built with ❤️ at Princeton Hackathon 2024
