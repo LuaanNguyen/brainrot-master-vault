@@ -118,7 +118,10 @@ export default function TopBar({
 
                     <div className="border-t my-1"></div>
 
-                    <button className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm rounded-md text-indigo-600 hover:bg-gray-50">
+                    <button
+                      className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm rounded-md opacity-50 cursor-not-allowed"
+                      disabled
+                    >
                       <Plus size={16} />
                       <span>Create New Vault</span>
                     </button>
@@ -141,9 +144,12 @@ export default function TopBar({
             <Search size={18} />
           </button>
 
-          {/* Notifications */}
+          {/* Notifications - Disabled */}
           <div className="relative">
-            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 relative">
+            <button
+              className="p-2 rounded-full text-gray-500 opacity-50 cursor-not-allowed"
+              disabled
+            >
               <Bell size={18} />
               {notifications > 0 && (
                 <span className="absolute top-0 right-0 bg-red-500 text-white w-4 h-4 flex items-center justify-center rounded-full text-[10px]">
@@ -153,18 +159,27 @@ export default function TopBar({
             </button>
           </div>
 
-          {/* History */}
-          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
+          {/* History - Disabled */}
+          <button
+            className="p-2 rounded-full text-gray-500 opacity-50 cursor-not-allowed"
+            disabled
+          >
             <History size={18} />
           </button>
 
-          {/* Settings */}
-          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
+          {/* Settings - Disabled */}
+          <button
+            className="p-2 rounded-full text-gray-500 opacity-50 cursor-not-allowed"
+            disabled
+          >
             <Settings size={18} />
           </button>
 
-          {/* Share */}
-          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
+          {/* Share - Disabled */}
+          <button
+            className="p-2 rounded-full text-gray-500 opacity-50 cursor-not-allowed"
+            disabled
+          >
             <Share2 size={18} />
           </button>
 
@@ -180,10 +195,10 @@ export default function TopBar({
             <span className="font-medium text-sm">Export</span>
           </motion.button>
 
-          {/* More options */}
+          {/* More options - Disabled */}
           <button
-            onClick={onMenuClick}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"
+            className="p-2 rounded-full text-gray-500 opacity-50 cursor-not-allowed"
+            disabled
           >
             <Ellipsis size={18} />
           </button>
