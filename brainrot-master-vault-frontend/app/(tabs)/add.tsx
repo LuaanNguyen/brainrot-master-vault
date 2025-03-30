@@ -1,29 +1,105 @@
-import { useState } from "react";
-import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
+import { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "lucide-react-native";
 
 export default function AddVideoScreen() {
   const [videoUrl, setVideoUrl] = useState("");
+  const [recentItems, setRecentItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleAddVideo = () => {
-    // TODO: Implement video processing logic
-    console.log("Processing video:", videoUrl);
+  useEffect(() => {
+    fetch("https://brainrotapi.codestacx.com/")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data.videos);
+        setRecentItems(data.videos);
+      })
+      .catch((error) => {
+        console.error("Error fetching recent videos:", error);
+      });
+  }, []);
+
+  const isYouTubeUrl = (url) => {
+    return url.includes("youtube.com") || url.includes("youtu.be");
+  };
+
+  const isTikTokUrl = (url) => {
+    return url.includes("tiktok.com");
+  };
+
+  const handleAddVideo = async () => {
+    if (!videoUrl) return;
+
+    setIsLoading(true);
+    setSuccessMessage("");
+
+    try {
+      let apiUrl;
+
+      if (isYouTubeUrl(videoUrl)) {
+        apiUrl = `https://brainrotapi.codestacx.com/youtube?video_url=${encodeURIComponent(
+          videoUrl
+        )}`;
+      } else if (isTikTokUrl(videoUrl)) {
+        apiUrl = `https://brainrotapi.codestacx.com/tiktok?tiktok_url=${encodeURIComponent(
+          videoUrl
+        )}`;
+      } else {
+        Alert.alert(
+          "Invalid URL",
+          "Please enter a valid YouTube or TikTok URL"
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage("Video successfully added to your library!");
+        setVideoUrl("");
+
+        // Refresh the recent videos list
+        const recentResponse = await fetch(
+          "https://brainrotapi.codestacx.com/"
+        );
+        const recentData = await recentResponse.json();
+        setRecentItems(recentData.videos);
+      } else {
+        Alert.alert("Error", data.message || "Failed to process video");
+      }
+    } catch (error) {
+      console.error("Error processing video:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Add TikTok Video</Text>
+        <Text style={styles.title}>Add Video</Text>
         <Text style={styles.subtitle}>
-          Paste a TikTok video link to add it to your library
+          Paste a YouTube or TikTok video link to add it to your library
         </Text>
 
         <View style={styles.inputContainer}>
           <Link size={20} color="#9CA3AF" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Paste TikTok URL here"
+            placeholder="Paste video URL here"
             placeholderTextColor="#6B7280"
             value={videoUrl}
             onChangeText={setVideoUrl}
@@ -32,16 +108,32 @@ export default function AddVideoScreen() {
           />
         </View>
 
+        {successMessage ? (
+          <View style={styles.successContainer}>
+            <Text style={styles.successMessage}>{successMessage}</Text>
+          </View>
+        ) : null}
+
         <Pressable
-          style={[styles.button, !videoUrl && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            (!videoUrl || isLoading) && styles.buttonDisabled,
+          ]}
           onPress={handleAddVideo}
-          disabled={!videoUrl}
+          disabled={!videoUrl || isLoading}
         >
-          <Text
-            style={[styles.buttonText, !videoUrl && styles.buttonTextDisabled]}
-          >
-            Process Video
-          </Text>
+          {isLoading ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text
+              style={[
+                styles.buttonText,
+                !videoUrl && styles.buttonTextDisabled,
+              ]}
+            >
+              Process Video
+            </Text>
+          )}
         </Pressable>
       </View>
     </SafeAreaView>
@@ -97,6 +189,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 12,
     width: "100%",
+    alignItems: "center",
   },
   buttonDisabled: {
     backgroundColor: "#374151",
@@ -109,5 +202,17 @@ const styles = StyleSheet.create({
   },
   buttonTextDisabled: {
     color: "#6B7280",
+  },
+  successContainer: {
+    backgroundColor: "#065F46",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+    width: "100%",
+  },
+  successMessage: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_600SemiBold",
+    textAlign: "center",
   },
 });

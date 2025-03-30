@@ -129,7 +129,7 @@ const LibraryScreen = () => {
   };
 
   const renderVideoItem = ({ item }) => {
-    // Extract video details from nested response data
+    // Handle different video sources and formats
     const videoId = item.video_id || item.id;
     const source = item.source || "youtube";
 
@@ -165,7 +165,7 @@ const LibraryScreen = () => {
         item.response_data.items[0].snippet.publishedAt) ||
       (item.response_data && item.response_data.publishedAt);
 
-    // Get appropriate thumbnail
+    // Create appropriate thumbnails based on source
     const getThumbnailUrl = () => {
       // Check for thumbnail in response_data items first
       if (
@@ -192,23 +192,32 @@ const LibraryScreen = () => {
         return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
       }
 
-      return "https://via.placeholder.com/120x70";
+      // Default thumbnail for TikTok
+      if (source === "tiktok") {
+        return "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&auto=format&fit=crop";
+      }
+
+      return "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&auto=format&fit=crop";
     };
 
-    // Handle video URL generation
-    const getVideoUrl = () => {
+    // Handle video URL based on source
+    const handleVideoPress = () => {
+      let url = "";
       if (source === "youtube") {
-        return `https://youtube.com/watch?v=${videoId}`;
+        url = `https://youtube.com/watch?v=${videoId}`;
       } else if (source === "tiktok") {
-        return `https://tiktok.com/@username/video/${videoId}`;
+        url = `https://tiktok.com/@username/video/${videoId}`;
       }
-      return "";
+
+      if (url) {
+        Linking.openURL(url);
+      }
     };
 
     return (
       <TouchableOpacity
         style={styles.recentlyAddedItem}
-        onPress={() => Linking.openURL(getVideoUrl())}
+        onPress={handleVideoPress}
       >
         <View style={styles.videoThumbnailContainer}>
           <Image
@@ -216,11 +225,9 @@ const LibraryScreen = () => {
             style={styles.recentlyAddedCover}
             resizeMode="cover"
           />
-          {source && (
-            <View style={styles.sourceBadge}>
-              <Text style={styles.sourceText}>{source}</Text>
-            </View>
-          )}
+          <View style={styles.sourceBadge}>
+            <Text style={styles.sourceText}>{source}</Text>
+          </View>
           {publishedDate && (
             <View style={styles.durationBadge}>
               <Text style={styles.durationText}>
