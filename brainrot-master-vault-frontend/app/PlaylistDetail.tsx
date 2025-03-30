@@ -227,9 +227,40 @@ export default function PlaylistDetail() {
     } else {
       console.log("Loading Sound");
       try {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          require("../assets/podcasts/tech_podcast.mp3") // Use require for static assets
-        );
+        // Determine which audio file to play based on playlist title
+        let audioSource;
+        const playlistTitle = (title as string).toLowerCase();
+
+        if (
+          playlistTitle.includes("tech news") ||
+          playlistTitle.includes("technology")
+        ) {
+          audioSource = require("../assets/podcasts/tech_podcast.mp3");
+        } else if (
+          playlistTitle.includes("natural disaster") ||
+          playlistTitle.includes("weather")
+        ) {
+          audioSource = require("../assets/podcasts/disaster_podcast.mp3");
+        } else if (
+          playlistTitle.includes("health") ||
+          playlistTitle.includes("fitness")
+        ) {
+          audioSource = require("../assets/podcasts/health_podcast.mp3");
+        } else if (
+          playlistTitle.includes("finance") ||
+          playlistTitle.includes("investing")
+        ) {
+          audioSource = require("../assets/podcasts/investing_podcast.mp3");
+        } else if (playlistTitle.includes("education")) {
+          audioSource = require("../assets/podcasts/education_podcast.mp3");
+        } else if (playlistTitle.includes("crime")) {
+          audioSource = require("../assets/podcasts/crime_podcast.mp3");
+        } else {
+          // Default audio if no match is found
+          audioSource = require("../assets/podcasts/tech_podcast.mp3");
+        }
+
+        const { sound: newSound } = await Audio.Sound.createAsync(audioSource);
         setSound(newSound);
         console.log("Playing Sound");
         await newSound.playAsync();
