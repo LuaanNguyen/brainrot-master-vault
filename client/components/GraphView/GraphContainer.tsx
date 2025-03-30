@@ -34,6 +34,7 @@ import { ChartNetwork, Smartphone, Ellipsis } from "lucide-react";
 import Link from "next/link";
 import ProfileSection from "../ProfileSection";
 import TopBar from "./TopBar";
+import Sidebar from "./Sidebar";
 
 // Import ForceGraphComponent with no SSR to prevent hydration issues
 const ForceGraphComponent = dynamic(() => import("./ForceGraphComponent"), {
@@ -189,62 +190,9 @@ export default function GraphContainer() {
         isFullscreen ? "fixed inset-0 z-50 " : " h-[calc(100vh-6rem)]"
       }`}
     >
-      <div className="flex h-full ">
-        {/* Sidebar for desktop */}
-        <div className="hidden md:flex flex-col w-16 border-r shrink-0 bg-muted/30">
-          <div className="flex flex-col items-center py-4 gap-2">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex items-center gap-3 font-bold"
-            >
-              <div className="size-10 rounded-xl bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                <ChartNetwork className="size-5" />
-              </div>
-            </motion.div>
-            {/*<Button variant="ghost" size="icon" className="rounded-full">
-              <Link href="/">
-                <HomeIcon className="h-5 w-5" />
-              </Link>
-            </Button>
-           <Button variant="ghost" size="icon" className="rounded-full">
-              <CircleIcon className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <VideoCameraIcon className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <ListBulletIcon className="h-5 w-5" />
-            </Button> */}
-          </div>
-          <div className="mt-auto pb-4 flex flex-col items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-              onClick={toggleFullscreen}
-            >
-              <ArrowsPointingOutIcon className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Link href="/">
-                <Smartphone className="h-5 w-5" />
-              </Link>
-            </Button>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Link href="/">
-                <HomeIcon className="h-5 w-5" />
-              </Link>
-            </Button>
-
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Link href="/">
-                <Cog6ToothIcon className="h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
+      <div className="flex h-full">
+        {/* Replace the old sidebar with our new component */}
+        <Sidebar toggleFullscreen={toggleFullscreen} />
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col h-full overflow-hidden">
