@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,22 +7,42 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
-// import Recent // Uncomment and complete this line if needed, or remove it if unused
+import { useEffect } from "react";
+
+// Format date helper function
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString();
+};
 
 // Recently Added Item Component
 const RecentlyAddedItem = ({ item }) => {
   return (
-    <TouchableOpacity style={styles.recentlyAddedItem}>
+    <TouchableOpacity
+      style={styles.recentlyAddedItem}
+      onPress={() => Linking.openURL(`https://youtube.com/shorts/${item.id}`)}
+    >
       <View style={styles.videoThumbnailContainer}>
         <Image
-          source={{ uri: item.imageUrl }}
+          source={{
+            uri: item.thumbnails || "https://via.placeholder.com/120x70",
+          }}
           style={styles.recentlyAddedCover}
+          resizeMode="cover"
         />
         <View style={styles.durationBadge}>
           <Text style={styles.durationText}>
-            {item.subtitle.split("•")[1].trim()}
+            {formatDate(item.publishedAt)}
           </Text>
         </View>
       </View>
@@ -30,9 +50,7 @@ const RecentlyAddedItem = ({ item }) => {
         <Text style={styles.recentlyAddedTitle} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.recentlyAddedSubtitle}>
-          {item.subtitle.split("•")[0].trim()}
-        </Text>
+        <Text style={styles.recentlyAddedSubtitle}>{item.channelTitle}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -40,60 +58,23 @@ const RecentlyAddedItem = ({ item }) => {
 
 export default function PlaylistDetail() {
   const { id, title } = useLocalSearchParams();
+  const [videos, setVideos] = useState([]);
 
-  // In a real app, you would fetch the playlist details based on the ID
-  // For now, we'll just use the data passed via params
+  useEffect(() => {
+    fetch("https://brainrotapi.codestacx.com/home")
+      .then((response) => response.json())
+      .then((data) => {
+        setVideos(data.videos);
+      });
+  }, []);
 
   // Mock playlist data including summary
   const playlistSummary =
     "A curated collection of short clips about the latest tech trends and innovations that are shaping our digital future. Updated regularly with new content.";
 
-  // Count of items
-  const totalDuration = "15 min"; // In a real app, calculate this from the items
-
-  const dummyItems = [
-    {
-      id: "1",
-      title: "AI Can Now Code Itself?",
-      subtitle: "Tech & AI • 2 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/123456789",
-    },
-    {
-      id: "2",
-      title: "How to Save Money in Your 20s",
-      subtitle: "Finance & Investing • 1 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1565373677921-0a9f1a025952?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/987654321",
-    },
-    {
-      id: "3",
-      title: "5-Minute Workout for Busy People",
-      subtitle: "Health & Fitness • 3 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1576678927484-cc9079570884?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/1122334455",
-    },
-    {
-      id: "4",
-      title: "Why Are Ice Baths So Popular?",
-      subtitle: "Science & Health • 2 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1612837017391-f77707cf7688?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/5566778899",
-    },
-    {
-      id: "5",
-      title: "The Secret to Going Viral",
-      subtitle: "Content Creation • 4 min",
-      imageUrl:
-        "https://images.unsplash.com/photo-1605379399642-870262d3d051?w=800&auto=format&fit=crop",
-      videoUrl: "https://www.tiktok.com/@example/video/3344556677",
-    },
-  ];
-  const itemCount = dummyItems.length;
+  // Count of items and total duration
+  const itemCount = videos.length || 0;
+  const totalDuration = videos.length ? `${videos.length * 2} min` : "0 min"; // Assuming each video is ~2 minutes
 
   return (
     <SafeAreaView style={styles.container}>
@@ -133,9 +114,13 @@ export default function PlaylistDetail() {
 
         {/* Playlist Content */}
         <View style={styles.recentlyAddedList}>
-          {dummyItems.map((item) => (
-            <RecentlyAddedItem key={item.id} item={item} />
-          ))}
+          {videos.length > 0 ? (
+            videos.map((item) => (
+              <RecentlyAddedItem key={item.id} item={item} />
+            ))
+          ) : (
+            <Text style={styles.placeholder}>Loading videos...</Text>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
