@@ -137,6 +137,21 @@ async def get_tiktok(tiktok_url: str):
             if cached_transcript:
                 print(f"Cache hit for TikTok transcript: {video_id}")
                 cached_response['transcription'] = cached_transcript
+                # check for cached summary
+                cached_summary = get_cached_summary(video_id)
+                if cached_summary:
+                    print(f"Cache hit for TikTok summary: {video_id}")
+                    cached_response['summary'] = cached_summary
+                else:
+                    print(f"Cache miss for TikTok summary: {video_id}. Generating new summary.")
+                    # Generate summary using the summarize_text function
+                    summary = summarize_text('Title:' + cached_response['title'] + 
+                                             'Transcript:' + cached_transcript +
+                                             'Description:' + cached_response['description'])
+                    # Cache the summary
+                    cache_summary(video_id, summary)
+                    print(f"Cached summary for video ID: {video_id}")
+                    cached_response['summary'] = summary
                 return cached_response # Return cached response + transcript
             else:
                 # If response is cached but transcript isn't, try to get/transcribe audio
@@ -153,12 +168,28 @@ async def get_tiktok(tiktok_url: str):
                     if transcribed_text:
                         cache_transcript(video_id, transcribed_text)
                         cached_response['transcription'] = transcribed_text
+                        # Check for cached summary
+                        cached_summary = get_cached_summary(video_id)
+                        if cached_summary:
+                            print(f"Cache hit for TikTok summary: {video_id}")
+                            cached_response['summary'] = cached_summary
+                        else:
+                            # Generate summary using the summarize_text function
+                            summary = summarize_text('Title:' + cached_response['title'] +
+                                                     'Transcript:' + transcribed_text)
+                            cached_response['summary'] = summary
+                            # Cache the summary
+                            cache_summary(video_id, summary)
+                            print(f"Cached summary for video ID: {video_id}")
+
                     else:
                         cached_response['transcription'] = None
                 else:
                     # If audio file doesn't exist (maybe deleted?), we can't transcribe
                     print(f"Audio file {mp3_file} not found for cached TikTok {video_id}. Cannot transcribe.")
                     cached_response['transcription'] = None
+                    cached_response['summary'] = None
+                
                 return cached_response
 
         except json.JSONDecodeError as e:
@@ -194,7 +225,6 @@ async def get_tiktok(tiktok_url: str):
     
     transcribed_text = await extract_audio(username, video_id)
     print("Audio extraction and transcription attempt completed.")
-
     result = {}
     result['title'] = data.get('video_description', 'N/A') # Use .get for safety
     result['id'] = data.get('video_id', video_id) # Use extracted video_id if not in data
@@ -203,6 +233,14 @@ async def get_tiktok(tiktok_url: str):
     result['thumbnail'] = None # TikTok API via pyktok doesn't easily provide this
     result['channelTitle'] = data.get('author_name', username) # Use extracted username if not in data
     result['transcription'] = transcribed_text # Add transcript
+
+    # Generate summary using the summarize_text function
+    result['summary'] = None # Initialize summary
+    summary = summarize_text('Title:' + result['title'] +
+                             'Transcript:' + transcribed_text +
+                                'Description:' + result['description'])
+    # Cache the summary
+    cache_summary(video_id, summary)
 
     # 3. Cache the combined result (metadata + transcript placeholder)
     # The transcript itself is cached separately by cache_transcript if successful
