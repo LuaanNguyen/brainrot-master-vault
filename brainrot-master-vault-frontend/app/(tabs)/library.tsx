@@ -12,12 +12,14 @@ import {
 import { useTheme } from "@/context/ThemeContext";
 import { Plus } from "lucide-react-native";
 import { useState, useEffect } from "react";
+import { useRefresh } from "../../context/RefreshContext"; // Add this import
 
 const LibraryScreen = () => {
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState("categories"); // 'categories' or 'recent'
   const [recentVideos, setRecentVideos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { refreshTrigger } = useRefresh(); // Add this line to use the refresh context
 
   // Mock data for categories with added image URLs
   const categories = [
@@ -94,7 +96,7 @@ const LibraryScreen = () => {
           setLoading(false);
         });
     }
-  }, [activeTab]);
+  }, [activeTab, refreshTrigger]); // Add refreshTrigger to dependency array
 
   const renderCategoryItem = ({ item }) => (
     <TouchableOpacity

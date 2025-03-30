@@ -12,6 +12,7 @@ import {
   Linking,
 } from "react-native";
 import { router } from "expo-router";
+import { useRefresh } from "../../context/RefreshContext"; // Add this import
 
 // Filter component
 const FilterTabs = ({ activeTab, setActiveTab }) => {
@@ -212,15 +213,20 @@ const RecentlyAddedItem = ({ item }) => {
 const Home = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [recentlyAddItems, setRecentItems] = useState([]);
+  const { refreshTrigger } = useRefresh(); // Add this line to use the refresh context
 
+  // Fetch videos when component mounts or refreshTrigger changes
   useEffect(() => {
     fetch("https://brainrotapi.codestacx.com/home")
       .then((response) => response.json())
       .then((data) => {
         console.log(data.videos);
         setRecentItems(data.videos);
+      })
+      .catch((error) => {
+        console.error("Error fetching recent videos:", error);
       });
-  }, []);
+  }, [refreshTrigger]);
 
   // Mock data
   const categories = [

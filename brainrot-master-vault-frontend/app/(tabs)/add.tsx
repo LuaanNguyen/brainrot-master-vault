@@ -10,12 +10,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "lucide-react-native";
+import { useRefresh } from "../../context/RefreshContext";
 
 export default function AddVideoScreen() {
   const [videoUrl, setVideoUrl] = useState("");
   const [recentItems, setRecentItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const { triggerRefresh } = useRefresh();
 
   useEffect(() => {
     fetch("https://brainrotapi.codestacx.com/")
@@ -70,12 +72,9 @@ export default function AddVideoScreen() {
         setSuccessMessage("Video successfully added to your library!");
         setVideoUrl("");
 
-        // Refresh the recent videos list
-        const recentResponse = await fetch(
-          "https://brainrotapi.codestacx.com/"
-        );
-        const recentData = await recentResponse.json();
-        setRecentItems(recentData.videos);
+        // Trigger refresh for other components - this will cause
+        // VideoContext to re-fetch data and update all subscribed components
+        triggerRefresh();
       } else {
         Alert.alert("Error", data.message || "Failed to process video");
       }
