@@ -69,8 +69,19 @@ const MusicItem = ({ item }) => {
 
 // Daily Mix Card
 const DailyMixCard = ({ item }) => {
+  const handlePress = () => {
+    router.push({
+      pathname: "/PlaylistDetail",
+      params: {
+        id: item.id,
+        title: item.number ? `Daily Mix ${item.number}` : item.description,
+        imageUrl: encodeURIComponent(item.imageUrl),
+      },
+    });
+  };
+
   return (
-    <TouchableOpacity style={styles.dailyMixCard}>
+    <TouchableOpacity style={styles.dailyMixCard} onPress={handlePress}>
       <Image source={{ uri: item.imageUrl }} style={styles.dailyMixImage} />
       <View style={styles.dailyMixOverlay}>
         <Text style={styles.dailyMixLabel}>Daily Mix</Text>
