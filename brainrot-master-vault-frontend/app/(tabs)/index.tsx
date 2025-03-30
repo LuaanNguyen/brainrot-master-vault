@@ -389,9 +389,7 @@ const Home = () => {
         {/* Made For You section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Made For You</Text>
-          <TouchableOpacity>
-            <Text style={styles.sectionLink}>Show all</Text>
-          </TouchableOpacity>
+          <TouchableOpacity></TouchableOpacity>
         </View>
 
         {/* Daily mixes horizontal scroll */}

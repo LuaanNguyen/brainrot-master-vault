@@ -64,7 +64,7 @@ const LibraryScreen = () => {
 
     // Calculate the next set of items to display
     const nextPage = page + 1;
-    const startIndex = visibleRecentVideos.length;
+    const startIndex = page * ITEMS_PER_PAGE; // Fix: Use page * ITEMS_PER_PAGE instead of visibleRecentVideos.length
     const endIndex = nextPage * ITEMS_PER_PAGE;
 
     // Add the next batch of items to the visible items
@@ -72,12 +72,12 @@ const LibraryScreen = () => {
       const newItems = allRecentVideos.slice(startIndex, endIndex);
 
       if (newItems.length > 0) {
-        setVisibleRecentVideos([...visibleRecentVideos, ...newItems]);
+        setVisibleRecentVideos((prev) => [...prev, ...newItems]);
         setPage(nextPage);
       }
 
       // Check if we've reached the end
-      if (startIndex + newItems.length >= allRecentVideos.length) {
+      if (endIndex >= allRecentVideos.length) {
         setHasReachedEnd(true);
       }
 
